@@ -1,0 +1,33 @@
+.card {
+width: 400px;
+border: 1px solid #dbdbdb;
+border-radius: 8px;
+background: #fff;
+}
+
+
+.body {
+width: 100%;
+aspect-ratio: 1 / 1;
+background: #f2f2f2;
+}
+
+
+.actions {
+display: flex;
+gap: 16px;
+padding: 10px 12px;
+}
+
+
+.action {
+background: none;
+border: none;
+font-size: 20px;
+cursor: pointer;
+}
+
+
+.action:hover {
+opacity: 0.6;
+}
