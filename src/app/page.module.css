@@ -1,0 +1,35 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.postsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .postsContainer {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+
+  .postsContainer {
+    gap: 12px;
+  }
+}

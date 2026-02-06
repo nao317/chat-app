@@ -1,12 +1,46 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light Theme - パステルカラー */
+  --background: #fef7f0;
+  --foreground: #4a4a4a;
+  --card-bg: #ffffff;
+  --card-border: #e8d5c4;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --input-bg: #fef9f5;
+  --input-border: #e8d5c4;
+  --button-primary: #f7b5ca;
+  --button-primary-hover: #f49dbb;
+  --button-secondary: #c8e3d4;
+  --button-secondary-hover: #b3d7c4;
+  --text-primary: #4a4a4a;
+  --text-secondary: #7a7a7a;
+  --text-muted: #a0a0a0;
+  --accent-pink: #f7b5ca;
+  --accent-mint: #b8e6d5;
+  --accent-lavender: #d4c5f9;
+  --accent-peach: #ffd4b8;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Dark Theme - パステルカラー（暗め） */
+    --background: #2a2438;
+    --foreground: #e8e0f0;
+    --card-bg: #3d3550;
+    --card-border: #524663;
+    --card-shadow: rgba(0, 0, 0, 0.3);
+    --input-bg: #352e45;
+    --input-border: #524663;
+    --button-primary: #c288b7;
+    --button-primary-hover: #d4a0c9;
+    --button-secondary: #8dbfa8;
+    --button-secondary-hover: #a3cfba;
+    --text-primary: #e8e0f0;
+    --text-secondary: #c4b8d4;
+    --text-muted: #9a8fb0;
+    --accent-pink: #c288b7;
+    --accent-mint: #8dbfa8;
+    --accent-lavender: #a99bd4;
+    --accent-peach: #d4a788;
   }
 }
 
@@ -17,11 +51,13 @@ body {
 }
 
 body {
-  color: var(--foreground);
+  color: var(--text-primary);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 * {
