@@ -1,6 +1,6 @@
 .card {
 width: 400px;
-border: 1px solid #dbdbdb;
+border: 1px solid #514d4d;
 border-radius: 8px;
 background: #fff;
 }
@@ -9,7 +9,7 @@ background: #fff;
 .body {
 width: 100%;
 aspect-ratio: 1 / 1;
-background: #f2f2f2;
+background: #d8d4d4;
 }
 
 
