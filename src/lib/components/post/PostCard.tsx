@@ -13,16 +13,19 @@ type Props = {
 export default function PostCard({ comment, nickname, createdAt }: Props) {
   return (
     <div className={styles.card}>
-      <div>
-        <strong>{nickname ?? "名無し"}</strong>
-        <p>{comment}</p>
-        <small>{new Date(createdAt).toLocaleString()}</small>
+      <div className={styles.header}>
+        <div className={styles.nickname}>{nickname ?? "名無し"}</div>
+        <div className={styles.timestamp}>{new Date(createdAt).toLocaleString()}</div>
+      </div>
+
+      <div className={styles.body}>
+        <p className={styles.comment}>{comment}</p>
       </div>
 
       <div className={styles.actions}>
-        <button aria-label="like"><Heart size={22} /></button>
-        <button aria-label="repeat"><Repeat2 size={22} /></button>
-        <button aria-label="reply"><MessageCircle size={22} /></button>
+        <button className={styles.action} aria-label="like"><Heart size={22} /></button>
+        <button className={styles.action} aria-label="repeat"><Repeat2 size={22} /></button>
+        <button className={styles.action} aria-label="reply"><MessageCircle size={22} /></button>
       </div>
     </div>
   );

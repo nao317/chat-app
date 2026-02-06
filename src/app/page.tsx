@@ -2,6 +2,7 @@ import Image from "next/image";
 import styles from "./page.module.css";
 
 import PostCard from "@/lib/components/post/PostCard";
+import PostForm from "@/lib/components/post/PostForm";
 import { createClient } from "@/lib/supabase/server";
 
 type PostWithAuthor = {
@@ -36,15 +37,18 @@ export default async function Home() {
   }
 
   return (
-    <div>
-      {posts?.map((post) => (
-        <PostCard
-          key={post.id}
-          comment={post.comment}
-          nickname={post.author?.nickname ?? "名無し"}
-          createdAt={post.created_at}
-        />
-      ))}
+    <div className={styles.container}>
+      <PostForm />
+      <div className={styles.postsContainer}>
+        {posts?.map((post) => (
+          <PostCard
+            key={post.id}
+            comment={post.comment}
+            nickname={post.author?.nickname ?? "名無し"}
+            createdAt={post.created_at}
+          />
+        ))}
+      </div>
     </div>
   );
 }

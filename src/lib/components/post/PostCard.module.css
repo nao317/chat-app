@@ -1,33 +1,139 @@
 .card {
-width: 400px;
-border: 1px solid #514d4d;
-border-radius: 8px;
-background: #fff;
+  width: 100%;
+  max-width: 600px;
+  border: 2px solid var(--card-border);
+  border-radius: 16px;
+  background: var(--card-bg);
+  box-shadow: 0 2px 8px var(--card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
 }
 
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--card-shadow);
+}
+
+.header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.nickname {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
 
 .body {
-width: 100%;
-aspect-ratio: 1 / 1;
-background: #d8d4d4;
+  padding: 16px 20px;
+  min-height: 60px;
 }
 
+.comment {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
 
 .actions {
-display: flex;
-gap: 16px;
-padding: 10px 12px;
+  display: flex;
+  gap: 24px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--card-border);
 }
-
 
 .action {
-background: none;
-border: none;
-font-size: 20px;
-cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s ease, transform 0.2s ease;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-
 .action:hover {
-opacity: 0.6;
+  color: var(--accent-pink);
+  transform: scale(1.1);
+  background: var(--input-bg);
+}
+
+.action:active {
+  transform: scale(0.95);
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+  .card {
+    border-radius: 12px;
+    max-width: 100%;
+  }
+
+  .header,
+  .body {
+    padding: 14px 16px;
+  }
+
+  .nickname {
+    font-size: 15px;
+  }
+
+  .comment {
+    font-size: 14px;
+  }
+
+  .actions {
+    gap: 20px;
+    padding: 10px 16px 14px;
+  }
+
+  .action {
+    font-size: 18px;
+    padding: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header,
+  .body {
+    padding: 12px 14px;
+  }
+
+  .nickname {
+    font-size: 14px;
+  }
+
+  .timestamp {
+    font-size: 11px;
+  }
+
+  .comment {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .actions {
+    gap: 16px;
+    padding: 8px 14px 12px;
+  }
+
+  .action {
+    font-size: 17px;
+    padding: 6px;
+  }
 }
