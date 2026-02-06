@@ -45,6 +45,7 @@ export default async function Home() {
             key={post.id}
             comment={post.comment}
             nickname={post.author?.nickname ?? "名無し"}
+            avatarUrl={post.author?.avatar_url}
             createdAt={post.created_at}
           />
         ))}

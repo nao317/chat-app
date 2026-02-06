@@ -21,6 +21,7 @@ export default function Signup() {
             alert(error.message);
             return;
         }
+        router.refresh(); // サーバーコンポーネントにセッション変更を通知
         router.push("/"); // ホーム画面にリダイレクト
     };
 

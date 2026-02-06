@@ -1,0 +1,222 @@
+.hamburgerButton {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  z-index: 1001;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+
+.hamburgerButton:hover {
+  background: var(--button-primary-hover);
+  transform: scale(1.05);
+}
+
+.bar {
+  width: 26px;
+  height: 3px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.barOpen1 {
+  transform: rotate(45deg) translate(8px, 8px);
+}
+
+.barOpen2 {
+  opacity: 0;
+}
+
+.barOpen3 {
+  transform: rotate(-45deg) translate(8px, -8px);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sideMenu {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 300px;
+  height: 100%;
+  background: var(--card-bg);
+  border-right: 2px solid var(--card-border);
+  z-index: 1000;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+  box-shadow: 4px 0 16px var(--card-shadow);
+}
+
+.sideMenuOpen {
+  left: 0;
+}
+
+.menuContent {
+  padding: 80px 20px 20px;
+}
+
+.userInfo {
+  text-align: center;
+  padding: 20px;
+  border-bottom: 2px solid var(--card-border);
+  margin-bottom: 20px;
+}
+
+.avatarContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-lavender);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.avatarPlaceholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
+  border: 3px solid var(--accent-lavender);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nickname {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  word-break: break-word;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.menuItem:hover {
+  background: var(--button-primary-hover);
+  border-color: var(--accent-lavender);
+  transform: translateX(4px);
+}
+
+.menuIcon {
+  font-size: 20px;
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+  .hamburgerButton {
+    top: 16px;
+    left: 16px;
+    width: 46px;
+    height: 46px;
+  }
+
+  .bar {
+    width: 24px;
+  }
+
+  .sideMenu {
+    width: 280px;
+    left: -300px;
+  }
+
+  .menuContent {
+    padding: 70px 16px 16px;
+  }
+
+  .userInfo {
+    padding: 16px;
+  }
+
+  .nickname {
+    font-size: 16px;
+  }
+
+  .menuItem {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hamburgerButton {
+    top: 12px;
+    left: 12px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .bar {
+    width: 22px;
+  }
+
+  .sideMenu {
+    width: 260px;
+    left: -280px;
+  }
+
+  .avatar {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .avatarPlaceholder {
+    width: 50px;
+    height: 50px;
+  }
+}

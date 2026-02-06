@@ -1,0 +1,32 @@
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import ProfileForm from "@/lib/components/profile/ProfileForm";
+import styles from "../auth.module.css";
+
+export default async function Profiles() {
+    const supabase = await createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect("/login");
+    }
+
+    const { data: profile, error } = await supabase
+        .from("profile")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+    if (error) {
+        console.error("Profile fetch error:", error);
+    }
+
+    return (
+        <div className={styles.container}>
+            <ProfileForm profile={profile} userId={user.id} />
+        </div>
+    );
+}
