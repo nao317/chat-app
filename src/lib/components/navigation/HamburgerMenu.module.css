@@ -141,6 +141,10 @@
   border-radius: 12px;
   text-decoration: none;
   transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
 }
 
 .menuItem:hover {

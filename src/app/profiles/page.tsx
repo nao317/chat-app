@@ -14,11 +14,15 @@ export default async function Profiles() {
         redirect("/login");
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error } = await supabase
         .from("profile")
         .select("*")
         .eq("id", user.id)
         .single();
+
+    if (error) {
+        console.error("Profile fetch error:", error);
+    }
 
     return (
         <div className={styles.container}>

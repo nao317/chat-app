@@ -21,6 +21,11 @@ export default async function ProfileShow() {
         .eq("id", user.id)
         .single();
 
+    // キャッシュバスティングのためタイムスタンプを追加
+    const avatarUrl = profile?.avatar_url 
+        ? `${profile.avatar_url}?t=${Date.now()}` 
+        : null;
+
     return (
         <div className={styles.container}>
             <div className={styles.profileCard}>
@@ -28,13 +33,14 @@ export default async function ProfileShow() {
                 
                 {/* アバター表示 */}
                 <div className={styles.avatarContainer}>
-                    {profile?.avatar_url ? (
+                    {avatarUrl ? (
                         <Image
-                            src={profile.avatar_url}
+                            src={avatarUrl}
                             alt="avatar"
                             width={120}
                             height={120}
                             className={styles.avatar}
+                            unoptimized
                         />
                     ) : (
                         <div className={styles.avatarPlaceholder} />

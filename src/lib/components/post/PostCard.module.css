@@ -19,6 +19,35 @@
   border-bottom: 1px solid var(--card-border);
 }
 
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarContainer {
+  flex-shrink: 0;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent-lavender);
+}
+
+.avatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
+  border: 2px solid var(--accent-lavender);
+}
+
+.userDetails {
+  flex: 1;
+  min-width: 0;
+}
+
 .nickname {
   font-size: 16px;
   font-weight: 700;
@@ -84,9 +113,26 @@
     max-width: 100%;
   }
 
-  .header,
+  .header {
+    padding: 14px 16px;
+  }
+
   .body {
     padding: 14px 16px;
+  }
+
+  .userInfo {
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .avatarPlaceholder {
+    width: 36px;
+    height: 36px;
   }
 
   .nickname {
@@ -109,9 +155,26 @@
 }
 
 @media (max-width: 480px) {
-  .header,
+  .header {
+    padding: 12px 14px;
+  }
+
   .body {
     padding: 12px 14px;
+  }
+
+  .userInfo {
+    gap: 8px;
+  }
+
+  .avatar {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .avatarPlaceholder {
+    width: 32px;
+    height: 32px;
   }
 
   .nickname {

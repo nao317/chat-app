@@ -26,6 +26,7 @@ export default function Login() {
       return;
     }
 
+    router.refresh(); // サーバーコンポーネントにセッション変更を通知
     router.push("/");
   };
 

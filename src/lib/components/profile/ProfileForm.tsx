@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 import styles from "@/app/auth.module.css";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 
 export default function ProfileForm({ profile, userId }: Props) {
   const supabase = createClient();
+  const router = useRouter();
 
   const [nickname, setNickname] = useState(profile?.nickname ?? "");
   const [intro, setIntro] = useState(profile?.intro ?? "");
@@ -31,13 +33,15 @@ export default function ProfileForm({ profile, userId }: Props) {
       })
       .eq("id", userId);
 
+    setIsLoading(false);
+
     if (error) {
+      console.error("Save error:", error);
       alert("エラー: " + error.message);
     } else {
       alert("保存しました！");
+      router.refresh(); // プロフィール更新を反映
     }
-
-    setIsLoading(false);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,8 +76,26 @@ export default function ProfileForm({ profile, userId }: Props) {
         data: { publicUrl },
       } = supabase.storage.from("icon").getPublicUrl(filePath);
 
-      setAvatarUrl(publicUrl);
-      alert("画像をアップロードしました！");
+      // キャッシュバスティングのためタイムスタンプを追加
+      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+
+      // データベースに直接保存
+      const { error: dbError } = await supabase
+        .from("profile")
+        .update({ avatar_url: publicUrl })
+        .eq("id", userId);
+
+      if (dbError) {
+        console.error("DB update error:", dbError);
+        alert(`保存失敗: ${dbError.message}`);
+        return;
+      }
+
+      setAvatarUrl(urlWithTimestamp);
+      alert("画像をアップロードして保存しました！");
+      
+      // ページ全体をリロードしてキャッシュをクリア
+      window.location.reload();
     } catch (error) {
       console.error("Unexpected error:", error);
       alert("予期しないエラーが発生しました");
@@ -95,6 +117,7 @@ export default function ProfileForm({ profile, userId }: Props) {
             width={100}
             height={100}
             style={{ borderRadius: "50%" }}
+            unoptimized
           />
         ) : (
           <div
