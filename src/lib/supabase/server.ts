@@ -17,10 +17,16 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
-            
+          } catch (error) {
+            // Cookie設定のエラーを無視（Server Componentsの制限対策）
           }
         },
+      },
+      auth: {
+        // トークンエラー時の自動リトライを無効化
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
       },
     }
   )

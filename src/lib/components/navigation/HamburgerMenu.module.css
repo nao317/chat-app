@@ -159,7 +159,16 @@
 }
 
 .menuIcon {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.menuItem:hover .menuIcon {
+  color: var(--accent-lavender);
 }
 
 /* スマホ対応 */
@@ -182,6 +191,10 @@
     border-right: none;
   }
 
+  .sideMenuOpen {
+    left: 0 !important;
+  }
+
   .menuContent {
     padding: 80px 20px 60px;
   }
@@ -197,6 +210,19 @@
   .menuItem {
     padding: 14px 16px;
     font-size: 15px;
+  }
+}
+
+/* パソコン対応（明示的） */
+@media (min-width: 769px) {
+  .sideMenu {
+    width: 300px;
+    max-width: 300px;
+    left: -320px;
+  }
+
+  .sideMenuOpen {
+    left: 0;
   }
 }
 
@@ -216,6 +242,10 @@
     width: 100%;
     max-width: 100%;
     left: -100%;
+  }
+
+  .sideMenuOpen {
+    left: 0 !important;
   }
 
   .menuContent {

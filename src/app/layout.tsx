@@ -26,9 +26,20 @@ export default async function RootLayout({
 }>) {
   const supabase = await createClient();
   
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // トークンエラーを処理
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    } else {
+      // リフレッシュトークンエラーの場合は無視してログアウト状態として扱う
+      console.log("Auth error (user treated as logged out):", error.message);
+    }
+  } catch (error) {
+    // 予期しないエラーも無視
+    console.log("Unexpected auth error:", error);
+  }
 
   let userProfile = null;
   if (user) {

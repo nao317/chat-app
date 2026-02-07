@@ -6,6 +6,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from './HamburgerMenu.module.css';
+import { LogInIcon, UsersRound } from 'lucide-react';
+import { Pencil } from 'lucide-react';
+import { House } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { ScrollText } from 'lucide-react';
 
 type Props = {
   nickname: string | null;
@@ -109,28 +114,28 @@ export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props
                   className={styles.menuItem}
                   onClick={() => handleNavigation('/profile_show')}
                 >
-                  <span className={styles.menuIcon}>👤</span>
+                  <span className={styles.menuIcon}><UsersRound size={20} strokeWidth={2} /></span>
                   プロフィールを見る
                 </button>
                 <button 
                   className={styles.menuItem}
                   onClick={() => handleNavigation('/profiles')}
                 >
-                  <span className={styles.menuIcon}>✏️</span>
+                  <span className={styles.menuIcon}><Pencil size={20} strokeWidth={2} /></span>
                   プロフィールを編集
                 </button>
                 <button 
                   className={styles.menuItem}
                   onClick={() => handleNavigation('/')}
                 >
-                  <span className={styles.menuIcon}>🏠</span>
+                  <span className={styles.menuIcon}><House size={20} strokeWidth={2} /></span>
                   タイムライン
                 </button>
                 <button 
                   className={styles.menuItem}
                   onClick={handleLogout}
                 >
-                  <span className={styles.menuIcon}>🚪</span>
+                  <span className={styles.menuIcon}><LogOut size={20} strokeWidth={2} /></span>
                   ログアウト
                 </button>
               </>
@@ -140,14 +145,14 @@ export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props
                   className={styles.menuItem}
                   onClick={() => handleNavigation('/login')}
                 >
-                  <span className={styles.menuIcon}>🔑</span>
+                  <span className={styles.menuIcon}><LogInIcon size={20} strokeWidth={2} /></span>
                   ログイン
                 </button>
                 <button 
                   className={styles.menuItem}
                   onClick={() => handleNavigation('/signup')}
                 >
-                  <span className={styles.menuIcon}>📝</span>
+                  <span className={styles.menuIcon}><ScrollText size={20} strokeWidth={2} /></span>
                   新規登録
                 </button>
               </>

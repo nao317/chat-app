@@ -26,13 +26,31 @@ export async function middleware(request: NextRequest) {
           )
         },
       },
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
     }
   )
 
-  // セッションをリフレッシュ（重要：サーバーコンポーネントがセッションを認識できるようにする）
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // セッションをリフレッシュ（エラーハンドリング付き）
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    // リフレッシュトークンエラーの場合は、古いCookieをクリア
+    if (error && (error.message.includes('refresh_token_not_found') || error.message.includes('Invalid Refresh Token'))) {
+      // すべてのSupabase関連Cookieをクリア
+      request.cookies.getAll().forEach(cookie => {
+        if (cookie.name.includes('sb-') || cookie.name.includes('supabase')) {
+          supabaseResponse.cookies.delete(cookie.name)
+        }
+      })
+    }
+  } catch (error) {
+    // 予期しないエラーはログに記録して続行
+    console.log('Middleware auth error:', error)
+  }
 
   return supabaseResponse
 }
