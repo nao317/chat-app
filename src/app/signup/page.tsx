@@ -13,7 +13,7 @@ export default function Signup() {
     const [password, setPassword] = useState("");
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
         });
@@ -21,6 +21,32 @@ export default function Signup() {
             alert(error.message);
             return;
         }
+
+        // ユーザー作成成功後、profileレコードを作成
+        if (data.user) {
+            console.log("プロフィールレコードを作成:", data.user.id);
+            
+            const { error: profileError, data: profileData } = await supabase
+                .from("profile")
+                .insert({
+                    id: data.user.id,
+                    nickname: "名無し",
+                    intro: "",
+                    avatar_url: ""
+                })
+                .select();
+            
+            console.log("プロフィール作成結果:", { profileError, profileData });
+            
+            if (profileError) {
+                console.error("Profile creation error:", profileError);
+                alert(`アカウントは作成されましたが、プロフィールの作成に失敗しました。\nログイン後に再度お試しください。\n\nエラー: ${profileError.message}`);
+                // プロフィール作成に失敗してもログインページに進む
+                router.push("/login");
+                return;
+            }
+        }
+
         router.refresh(); // サーバーコンポーネントにセッション変更を通知
         router.push("/"); // ホーム画面にリダイレクト
     };
@@ -44,6 +70,7 @@ export default function Signup() {
                         placeholder="パスワード"
                         onChange={(e) => setPassword(e.target.value)}
                         className={styles.input}
+                        autoComplete="new-password"
                         required
                     />
                 </div>

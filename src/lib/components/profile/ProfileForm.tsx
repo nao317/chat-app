@@ -24,24 +24,42 @@ export default function ProfileForm({ profile, userId }: Props) {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await supabase
+    console.log("=== 保存処理開始 ===");
+    console.log("ユーザーID:", userId);
+    console.log("更新データ:", { nickname, intro, avatar_url: avatarUrl });
+
+    // 単純なupdateを使用（プロフィールは必ず存在する前提）
+    const { error, data } = await supabase
       .from("profile")
       .update({
         nickname,
         intro,
         avatar_url: avatarUrl,
       })
-      .eq("id", userId);
+      .eq('id', userId)
+      .select();
+
+    console.log("保存レスポンス:", { error, data });
 
     setIsLoading(false);
 
     if (error) {
       console.error("Save error:", error);
-      alert("エラー: " + error.message);
-    } else {
-      alert("保存しました！");
-      router.refresh(); // プロフィール更新を反映
+      alert(`エラー: ${error.message}\n\nデータベースのRLSポリシーを確認してください。`);
+      return;
     }
+
+    if (!data || data.length === 0) {
+      alert("プロフィールの更新に失敗しました。ページをリロードして再試行してください。");
+      return;
+    }
+
+    console.log("保存成功:", data);
+    alert("保存しました！");
+    
+    // プロフィール表示ページにリダイレクト
+    router.push('/profile_show');
+    router.refresh();
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,16 +72,21 @@ export default function ProfileForm({ profile, userId }: Props) {
     setIsLoading(true);
 
     try {
+      console.log("=== 画像アップロード開始 ===");
+      console.log("ファイルパス:", filePath);
+
       // まず既存のファイルを削除（エラーは無視）
       await supabase.storage.from("icon").remove([filePath]);
 
       // 新しいファイルをアップロード
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from("icon")
         .upload(filePath, file, { 
           cacheControl: '3600',
           upsert: true 
         });
+
+      console.log("アップロード結果:", { uploadError, uploadData });
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
@@ -76,14 +99,22 @@ export default function ProfileForm({ profile, userId }: Props) {
         data: { publicUrl },
       } = supabase.storage.from("icon").getPublicUrl(filePath);
 
+      console.log("公開URL:", publicUrl);
+
       // キャッシュバスティングのためタイムスタンプを追加
       const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
 
       // データベースに直接保存
-      const { error: dbError } = await supabase
+      console.log("DB更新開始 - avatar_url:", publicUrl);
+      
+      // 単純なupdateを使用
+      const { error: dbError, data: dbData } = await supabase
         .from("profile")
         .update({ avatar_url: publicUrl })
-        .eq("id", userId);
+        .eq('id', userId)
+        .select();
+
+      console.log("DB更新結果:", { dbError, dbData });
 
       if (dbError) {
         console.error("DB update error:", dbError);
@@ -91,11 +122,18 @@ export default function ProfileForm({ profile, userId }: Props) {
         return;
       }
 
+      if (!dbData || dbData.length === 0) {
+        alert("プロフィールの更新に失敗しました。");
+        return;
+      }
+
       setAvatarUrl(urlWithTimestamp);
       alert("画像をアップロードして保存しました！");
       
-      // ページ全体をリロードしてキャッシュをクリア
-      window.location.reload();
+      // 画像のキャッシュをクリアするため少し待ってから更新
+      setTimeout(() => {
+        router.refresh();
+      }, 500);
     } catch (error) {
       console.error("Unexpected error:", error);
       alert("予期しないエラーが発生しました");

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import styles from './HamburgerMenu.module.css';
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -32,6 +34,17 @@ export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props
     }
     closeMenu();
     router.push(path);
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      alert(`ログアウトに失敗しました: ${error.message}`);
+      return;
+    }
+    closeMenu();
+    router.push('/login');
+    router.refresh();
   };
 
   return (
@@ -112,6 +125,13 @@ export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props
                 >
                   <span className={styles.menuIcon}>🏠</span>
                   タイムライン
+                </button>
+                <button 
+                  className={styles.menuItem}
+                  onClick={handleLogout}
+                >
+                  <span className={styles.menuIcon}>🚪</span>
+                  ログアウト
                 </button>
               </>
             ) : (
