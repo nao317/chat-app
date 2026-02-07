@@ -14,13 +14,50 @@ export default async function Profiles() {
         redirect("/login");
     }
 
-    const { data: profile, error } = await supabase
+    let { data: profile, error } = await supabase
         .from("profile")
         .select("*")
         .eq("id", user.id)
         .single();
 
-    if (error) {
+    // profileレコードが存在しない場合は作成
+    if (error && error.code === 'PGRST116') {
+        console.log("プロフィールが見つからないため、作成します");
+        console.log("ユーザーID:", user.id);
+        console.log("ユーザーemail:", user.email);
+        
+        const { error: insertError, data: insertData } = await supabase
+            .from("profile")
+            .insert({
+                id: user.id,
+                nickname: "名無し",
+                intro: "",
+                avatar_url: ""
+            })
+            .select();
+        
+        console.log("Insert結果:", { insertError, insertData });
+        
+        if (insertError) {
+            console.error("Profile creation error:", insertError);
+            return (
+                <div className={styles.container}>
+                    <div className={styles.form}>
+                        <h2 className={styles.title}>エラー</h2>
+                        <p>プロフィールの作成に失敗しました。</p>
+                        <p>エラー: {insertError.message}</p>
+                        <p>Supabaseのダッシュボードで以下を確認してください：</p>
+                        <ul>
+                            <li>profileテーブルのRLSポリシーがINSERTを許可しているか</li>
+                            <li>ユーザーが認証されているか</li>
+                        </ul>
+                    </div>
+                </div>
+            );
+        }
+        
+        profile = insertData?.[0] || null;
+    } else if (error) {
         console.error("Profile fetch error:", error);
     }
 
