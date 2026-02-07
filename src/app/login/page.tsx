@@ -49,6 +49,7 @@ export default function Login() {
             placeholder="パスワード"
             onChange={(e) => setPassword(e.target.value)}
             className={styles.input}
+            autoComplete="current-password"
             required
           />
         </div>

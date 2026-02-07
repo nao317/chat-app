@@ -27,6 +27,12 @@
 
 .avatarContainer {
   flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.avatarContainer:hover {
+  opacity: 0.8;
 }
 
 .avatar {
@@ -46,6 +52,16 @@
 .userDetails {
   flex: 1;
   min-width: 0;
+}
+
+.nicknameLink {
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.nicknameLink:hover {
+  opacity: 0.7;
 }
 
 .nickname {
