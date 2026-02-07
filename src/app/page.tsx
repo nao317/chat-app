@@ -9,6 +9,7 @@ type PostWithAuthor = {
   id: number;
   comment: string;
   created_at: string;
+  user_id: string;
   author: {
     nickname: string;
     avatar_url: string | null;
@@ -24,6 +25,7 @@ export default async function Home() {
       id,
       comment,
       created_at,
+      user_id,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -47,6 +49,7 @@ export default async function Home() {
             nickname={post.author?.nickname ?? "名無し"}
             avatarUrl={post.author?.avatar_url}
             createdAt={post.created_at}
+            userId={post.user_id}
           />
         ))}
       </div>
