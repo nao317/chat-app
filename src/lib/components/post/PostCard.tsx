@@ -185,18 +185,18 @@ export default function PostCard({
         <div className={styles.body}>
           <Link href={`/post/${displayPostId}`} className={styles.postLink}>
             <p className={styles.comment}>{displayComment}</p>
-            
-            {quotedPost && (
-              <div className={styles.quotedPost}>
-                <div className={styles.quotedHeader}>
-                  <Link href={`/profile_show/${quotedPost.userId}`} className={styles.quotedNickname}>
-                    @{quotedPost.nickname}
-                  </Link>
-                </div>
-                <p className={styles.quotedComment}>{quotedPost.comment}</p>
-              </div>
-            )}
           </Link>
+            
+          {quotedPost && (
+            <div className={styles.quotedPost}>
+              <div className={styles.quotedHeader}>
+                <Link href={`/profile_show/${quotedPost.userId}`} className={styles.quotedNickname}>
+                  @{quotedPost.nickname}
+                </Link>
+              </div>
+              <p className={styles.quotedComment}>{quotedPost.comment}</p>
+            </div>
+          )}
         </div>
 
         <div className={styles.actions}>
