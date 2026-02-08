@@ -1,65 +1,61 @@
 .tabs {
   display: flex;
   gap: 8px;
-  background: var(--card-bg);
-  border: 2px solid var(--card-border);
-  border-radius: 16px;
-  padding: 6px;
+  background: var(--input-bg);
+  border-radius: 12px;
+  padding: 4px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px var(--card-shadow);
+  width: fit-content;
 }
 
 .tab {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tab:hover {
-  background: var(--input-bg);
+  background: var(--card-bg);
   color: var(--text-primary);
 }
 
 .tab.active {
-  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(168, 162, 255, 0.3);
+  background: var(--card-bg);
+  color: var(--accent-lavender);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .tab span {
-  font-size: 15px;
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {
   .tabs {
     margin-bottom: 20px;
-    padding: 5px;
   }
 
   .tab {
-    padding: 10px 16px;
-    font-size: 14px;
+    padding: 8px 14px;
   }
 
   .tab span {
-    font-size: 14px;
+    font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
   .tab {
-    padding: 10px 12px;
+    padding: 8px 12px;
     gap: 6px;
   }
 

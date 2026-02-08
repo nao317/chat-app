@@ -11,6 +11,8 @@ import { Pencil } from 'lucide-react';
 import { House } from 'lucide-react';
 import { LogOut } from 'lucide-react';
 import { ScrollText } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 
 type Props = {
   nickname: string | null;
@@ -130,6 +132,20 @@ export default function HamburgerMenu({ nickname, avatarUrl, isLoggedIn }: Props
                 >
                   <span className={styles.menuIcon}><House size={20} strokeWidth={2} /></span>
                   タイムライン
+                </button>
+                <button 
+                  className={styles.menuItem}
+                  onClick={() => handleNavigation('/likes')}
+                >
+                  <span className={styles.menuIcon}><Heart size={20} strokeWidth={2} /></span>
+                  いいね
+                </button>
+                <button 
+                  className={styles.menuItem}
+                  onClick={() => handleNavigation('/bookmarks')}
+                >
+                  <span className={styles.menuIcon}><Bookmark size={20} strokeWidth={2} /></span>
+                  ブックマーク
                 </button>
                 <button 
                   className={styles.menuItem}

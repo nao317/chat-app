@@ -104,15 +104,16 @@
   padding: 12px 32px;
   border: none;
   border-radius: 24px;
-  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
+  background: var(--accent-lavender);
   color: white;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .submitButton:hover:not(:disabled) {
+  background: var(--accent-peach);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(168, 162, 255, 0.3);
 }
