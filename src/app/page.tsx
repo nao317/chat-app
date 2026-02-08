@@ -2,7 +2,7 @@ import Image from "next/image";
 import styles from "./page.module.css";
 
 import { createClient } from "@/lib/supabase/server";
-import { getPostStats, getUserPostActions, getMutualFollowIds } from "@/lib/supabase/actions";
+import { getPostStats, getUserPostActions, getMutualFollowIds, getRepostedPostInfo } from "@/lib/supabase/actions";
 import TimelineClient from "./TimelineClient";
 
 type PostWithAuthor = {
@@ -12,6 +12,7 @@ type PostWithAuthor = {
   user_id: string;
   parent_post_id: number | null;
   quote_of: number | null;
+  repost_of: number | null;
   is_private: boolean;
   author: {
     nickname: string;
@@ -61,7 +62,7 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
   // 相互フォローのユーザーIDを取得
-  const mutualFollowIds = user ? await getMutualFollowIds(user.id) : [];
+  const mutualFollowIds = user ? await getMutualFollowIds(user.id, supabase) : [];
 
   const { data: posts, error } = await supabase
     .from("post")
@@ -72,13 +73,13 @@ export default async function Home() {
       user_id,
       parent_post_id,
       quote_of,
+      repost_of,
       is_private,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
       )
     `)
-    .is('repost_of', null)  // 単純なリポストは除外
     .order("created_at", { ascending: false })
     .returns<PostWithAuthor[]>();
 
@@ -101,16 +102,25 @@ export default async function Home() {
         return null;
       }
 
-      const stats = await getPostStats(post.id);
-      const userActions = await getUserPostActions(post.id, user?.id || null);
+      const stats = await getPostStats(post.id, supabase);
+      const userActions = await getUserPostActions(post.id, user?.id || null, supabase);
       const parentPost = await getParentPostInfo(supabase, post.parent_post_id);
       const quotedPost = await getQuotedPostInfo(supabase, post.quote_of);
+      const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
+      
+      // authorが配列の場合、最初の要素を取得
+      const normalizedRepostedPost = repostedPost ? {
+        ...repostedPost,
+        author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+      } : null;
+      
       return {
         ...post,
         ...stats,
         ...userActions,
         parent_post: parentPost,
         quoted_post: quotedPost,
+        reposted_post: normalizedRepostedPost,
       };
     })
   );

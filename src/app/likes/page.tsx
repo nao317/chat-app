@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getPostStats, getUserPostActions } from "@/lib/supabase/actions";
+import { getPostStats, getUserPostActions, getRepostedPostInfo } from "@/lib/supabase/actions";
 import PostCard from "@/lib/components/post/PostCard";
 import styles from "./likes.module.css";
 import { Heart } from "lucide-react";
@@ -12,6 +12,7 @@ type PostWithAuthor = {
   user_id: string;
   parent_post_id: number | null;
   quote_of: number | null;
+  repost_of: number | null;
   is_private: boolean;
   author: {
     nickname: string;
@@ -89,6 +90,7 @@ export default async function LikesPage() {
         user_id,
         parent_post_id,
         quote_of,
+        repost_of,
         is_private,
         author:profile!post_user_id_fkey (
           nickname,
@@ -111,16 +113,24 @@ export default async function LikesPage() {
   // 各投稿の統計情報とユーザーアクションを取得
   const postsWithStats = await Promise.all(
     posts.map(async (post) => {
-      const stats = await getPostStats(post.id);
-      const userActions = await getUserPostActions(post.id, user.id);
+      const stats = await getPostStats(post.id, supabase);
+      const userActions = await getUserPostActions(post.id, user.id, supabase);
       const parentPost = await getParentPostInfo(supabase, post.parent_post_id);
       const quotedPost = await getQuotedPostInfo(supabase, post.quote_of);
+      const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
+      
+      const normalizedRepostedPost = repostedPost ? {
+        ...repostedPost,
+        author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+      } : null;
+      
       return {
         ...post,
         ...stats,
         ...userActions,
         parent_post: parentPost,
         quoted_post: quotedPost,
+        reposted_post: normalizedRepostedPost,
       };
     })
   );
@@ -161,6 +171,14 @@ export default async function LikesPage() {
                 comment: post.quoted_post.comment,
                 nickname: post.quoted_post.author?.nickname ?? "名無し",
                 userId: post.quoted_post.user_id,
+              } : undefined}
+              repostedPost={post.reposted_post ? {
+                id: post.reposted_post.id,
+                comment: post.reposted_post.comment,
+                nickname: post.reposted_post.author?.nickname ?? "名無し",
+                avatarUrl: post.reposted_post.author?.avatar_url || null,
+                userId: post.reposted_post.user_id,
+                createdAt: post.reposted_post.created_at,
               } : undefined}
             />
           ))}

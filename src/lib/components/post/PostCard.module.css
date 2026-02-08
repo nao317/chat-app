@@ -36,6 +36,27 @@
   opacity: 0.7;
 }
 
+.repostInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.repostLink {
+  color: var(--accent-mint);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.repostLink:hover {
+  opacity: 0.7;
+}
+
 
 .header {
   padding: 16px 20px 12px;

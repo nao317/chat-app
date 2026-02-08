@@ -36,6 +36,16 @@ type Post = {
       nickname: string;
     } | null;
   } | null;
+  reposted_post?: {
+    id: number;
+    comment: string;
+    user_id: string;
+    created_at: string;
+    author: {
+      nickname: string;
+      avatar_url: string | null;
+    } | null;
+  } | null;
 };
 
 type Props = {
@@ -89,6 +99,14 @@ export default function TimelineClient({ initialPosts }: Props) {
                 comment: post.quoted_post.comment,
                 nickname: post.quoted_post.author?.nickname ?? "名無し",
                 userId: post.quoted_post.user_id,
+              } : undefined}
+              repostedPost={post.reposted_post ? {
+                id: post.reposted_post.id,
+                comment: post.reposted_post.comment,
+                nickname: post.reposted_post.author?.nickname ?? "名無し",
+                avatarUrl: post.reposted_post.author?.avatar_url || null,
+                userId: post.reposted_post.user_id,
+                createdAt: post.reposted_post.created_at,
               } : undefined}
             />
           ))

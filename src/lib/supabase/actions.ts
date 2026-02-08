@@ -205,8 +205,8 @@ export async function toggleFollow(targetUserId: string) {
 }
 
 // 投稿の統計情報を取得
-export async function getPostStats(postId: number) {
-  const supabase = await createClient();
+export async function getPostStats(postId: number, supabaseClient?: any) {
+  const supabase = supabaseClient || await createClient();
   
   // いいね数
   const { count: likeCount } = await supabase
@@ -247,7 +247,7 @@ export async function getPostStats(postId: number) {
 }
 
 // ユーザーの投稿へのアクション状態を取得
-export async function getUserPostActions(postId: number, userId: string | null) {
+export async function getUserPostActions(postId: number, userId: string | null, supabaseClient?: any) {
   if (!userId) {
     return {
       isLiked: false,
@@ -256,7 +256,7 @@ export async function getUserPostActions(postId: number, userId: string | null) 
     };
   }
 
-  const supabase = await createClient();
+  const supabase = supabaseClient || await createClient();
   
   // いいね状態
   const { data: likeData } = await supabase
@@ -290,12 +290,12 @@ export async function getUserPostActions(postId: number, userId: string | null) 
 }
 
 // フォロー状態を取得
-export async function getFollowStatus(targetUserId: string, currentUserId: string | null) {
+export async function getFollowStatus(targetUserId: string, currentUserId: string | null, supabaseClient?: any) {
   if (!currentUserId) {
     return { isFollowing: false };
   }
 
-  const supabase = await createClient();
+  const supabase = supabaseClient || await createClient();
   
   const { data } = await supabase
     .from('follow')
@@ -308,8 +308,8 @@ export async function getFollowStatus(targetUserId: string, currentUserId: strin
 }
 
 // フォロワー数・フォロー中数を取得
-export async function getFollowCounts(userId: string) {
-  const supabase = await createClient();
+export async function getFollowCounts(userId: string, supabaseClient?: any) {
+  const supabase = supabaseClient || await createClient();
   
   // フォロワー数
   const { count: followerCount } = await supabase
@@ -330,8 +330,8 @@ export async function getFollowCounts(userId: string) {
 }
 
 // 相互フォローのユーザーIDリストを取得
-export async function getMutualFollowIds(userId: string) {
-  const supabase = await createClient();
+export async function getMutualFollowIds(userId: string, supabaseClient?: any) {
+  const supabase = supabaseClient || await createClient();
   
   // 自分がフォローしているユーザー
   const { data: following } = await supabase
@@ -347,11 +347,56 @@ export async function getMutualFollowIds(userId: string) {
   
   if (!following || !followers) return [];
   
-  const followingIds = new Set(following.map(f => f.following_id));
-  const followerIds = followers.map(f => f.follower_id);
+  const followingIds = new Set(following.map((f: any) => f.following_id));
+  const followerIds = followers.map((f: any) => f.follower_id);
   
   // 相互フォローのユーザーIDを抽出
-  const mutualIds = followerIds.filter(id => followingIds.has(id));
+  const mutualIds = followerIds.filter((id: any) => followingIds.has(id));
   
   return mutualIds;
+}
+
+// リポスト情報を取得
+export async function getRepostedPostInfo(repostOfId: number | null, supabaseClient?: any) {
+  if (!repostOfId) return null;
+  
+  const supabase = supabaseClient || await createClient();
+  
+  const { data } = await supabase
+    .from("post")
+    .select(`
+      id,
+      comment,
+      user_id,
+      created_at,
+      author:profile!post_user_id_fkey (
+        nickname,
+        avatar_url
+      )
+    `)
+    .eq("id", repostOfId)
+    .single();
+    
+  return data;
+}
+
+// ユーザー検索
+export async function searchUsers(query: string) {
+  const supabase = await createClient();
+  
+  if (!query.trim()) {
+    return { success: true, users: [] };
+  }
+  
+  const { data: users, error } = await supabase
+    .from('profile')
+    .select('user_id, nickname, avatar_url, bio')
+    .ilike('nickname', `%${query}%`)
+    .limit(20);
+  
+  if (error) {
+    return { success: false, error: error.message, users: [] };
+  }
+  
+  return { success: true, users: users || [] };
 }

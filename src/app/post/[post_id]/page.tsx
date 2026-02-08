@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/lib/components/post/PostCard";
-import { getPostStats, getUserPostActions } from "@/lib/supabase/actions";
+import { getPostStats, getUserPostActions, getRepostedPostInfo } from "@/lib/supabase/actions";
 import styles from "./postDetail.module.css";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -18,6 +18,7 @@ type PostWithAuthor = {
   user_id: string;
   parent_post_id: number | null;
   quote_of: number | null;
+  repost_of: number | null;
   author: Array<{
     nickname: string;
     avatar_url: string | null;
@@ -76,6 +77,7 @@ export default async function PostDetail({ params }: Props) {
       user_id,
       parent_post_id,
       quote_of,
+      repost_of,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -108,6 +110,7 @@ export default async function PostDetail({ params }: Props) {
       user_id,
       parent_post_id,
       quote_of,
+      repost_of,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -120,17 +123,30 @@ export default async function PostDetail({ params }: Props) {
   // 親投稿と引用投稿情報を取得
   const parentPost = await getParentPostInfo(supabase, post.parent_post_id);
   const quotedPost = await getQuotedPostInfo(supabase, post.quote_of);
+  const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
+  
+  const normalizedRepostedPost = repostedPost ? {
+    ...repostedPost,
+    author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+  } : null;
 
   // 統計情報とユーザーアクションを取得
-  const postStats = await getPostStats(post.id);
-  const postActions = await getUserPostActions(post.id, user?.id || null);
+  const postStats = await getPostStats(post.id, supabase);
+  const postActions = await getUserPostActions(post.id, user?.id || null, supabase);
 
   const repliesWithStats = await Promise.all(
     (replies || []).map(async (reply) => {
-      const stats = await getPostStats(reply.id);
-      const actions = await getUserPostActions(reply.id, user?.id || null);
+      const stats = await getPostStats(reply.id, supabase);
+      const actions = await getUserPostActions(reply.id, user?.id || null, supabase);
       const replyQuotedPost = await getQuotedPostInfo(supabase, reply.quote_of);
-      return { ...reply, ...stats, ...actions, quoted_post: replyQuotedPost };
+      const replyRepostedPost = await getRepostedPostInfo(reply.repost_of, supabase);
+      
+      const normalizedReplyRepostedPost = replyRepostedPost ? {
+        ...replyRepostedPost,
+        author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
+      } : null;
+      
+      return { ...reply, ...stats, ...actions, quoted_post: replyQuotedPost, reposted_post: normalizedReplyRepostedPost };
     })
   );
 
@@ -165,6 +181,14 @@ export default async function PostDetail({ params }: Props) {
             nickname: quotedPost.author?.nickname ?? "名無し",
             userId: quotedPost.user_id,
           } : undefined}
+          repostedPost={normalizedRepostedPost ? {
+            id: normalizedRepostedPost.id,
+            comment: normalizedRepostedPost.comment,
+            nickname: normalizedRepostedPost.author?.nickname ?? "名無し",
+            avatarUrl: normalizedRepostedPost.author?.avatar_url || null,
+            userId: normalizedRepostedPost.user_id,
+            createdAt: normalizedRepostedPost.created_at,
+          } : undefined}
         />
       </div>
 
@@ -192,6 +216,14 @@ export default async function PostDetail({ params }: Props) {
                   comment: reply.quoted_post.comment,
                   nickname: reply.quoted_post.author?.nickname ?? "名無し",
                   userId: reply.quoted_post.user_id,
+                } : undefined}
+                repostedPost={reply.reposted_post ? {
+                  id: reply.reposted_post.id,
+                  comment: reply.reposted_post.comment,
+                  nickname: reply.reposted_post.author?.nickname ?? "名無し",
+                  avatarUrl: reply.reposted_post.author?.avatar_url || null,
+                  userId: reply.reposted_post.user_id,
+                  createdAt: reply.reposted_post.created_at,
                 } : undefined}
               />
             ))}

@@ -48,8 +48,8 @@ export default async function ProfileShow({ params }: Props) {
     const isOwnProfile = currentUser?.id === user_id;
 
     // フォロー状態とフォロワー数を取得
-    const followStatus = await getFollowStatus(user_id, currentUser?.id || null);
-    const followCounts = await getFollowCounts(user_id);
+    const followStatus = await getFollowStatus(user_id, currentUser?.id || null, supabase);
+    const followCounts = await getFollowCounts(user_id, supabase);
 
     return (
         <div className={styles.container}>

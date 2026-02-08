@@ -32,6 +32,14 @@ type Props = {
     nickname: string;
     userId: string;
   } | null;
+  repostedPost?: {
+    id: number;
+    comment: string;
+    nickname: string;
+    avatarUrl?: string | null;
+    userId: string;
+    createdAt: string;
+  } | null;
 };
 
 export default function PostCard({ 
@@ -51,6 +59,7 @@ export default function PostCard({
   replyToNickname,
   replyToUserId,
   quotedPost,
+  repostedPost,
 }: Props) {
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [isBookmarked, setIsBookmarked] = useState(initialIsBookmarked);
@@ -62,6 +71,14 @@ export default function PostCard({
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showRepostMenu, setShowRepostMenu] = useState(false);
   const router = useRouter();
+
+  // リポストの場合は元の投稿の情報を使用
+  const displayPostId = repostedPost?.id || postId;
+  const displayComment = repostedPost?.comment || comment;
+  const displayNickname = repostedPost?.nickname || nickname;
+  const displayAvatarUrl = repostedPost?.avatarUrl || avatarUrl;
+  const displayCreatedAt = repostedPost?.createdAt || createdAt;
+  const displayUserId = repostedPost?.userId || userId;
 
   const handleLike = async () => {
     const result = await toggleLike(postId);
@@ -103,6 +120,14 @@ export default function PostCard({
   return (
     <>
       <div className={styles.card}>
+        {repostedPost && (
+          <div className={styles.repostInfo}>
+            <Repeat2 size={14} />
+            <Link href={`/profile_show/${userId}`} className={styles.repostLink}>
+              @{nickname}がリポストしました
+            </Link>
+          </div>
+        )}
         {replyToNickname && replyToUserId && (
           <div className={styles.replyInfo}>
             <MessageCircle size={14} />
@@ -113,11 +138,11 @@ export default function PostCard({
         )}
         <div className={styles.header}>
           <div className={styles.userInfo}>
-            {userId ? (
-              <Link href={`/profile_show/${userId}`} className={styles.avatarContainer}>
-                {avatarUrl ? (
+            {displayUserId ? (
+              <Link href={`/profile_show/${displayUserId}`} className={styles.avatarContainer}>
+                {displayAvatarUrl ? (
                   <Image
-                    src={avatarUrl}
+                    src={displayAvatarUrl}
                     alt="avatar"
                     width={40}
                     height={40}
@@ -130,9 +155,9 @@ export default function PostCard({
               </Link>
             ) : (
               <div className={styles.avatarContainer}>
-                {avatarUrl ? (
+                {displayAvatarUrl ? (
                   <Image
-                    src={avatarUrl}
+                    src={displayAvatarUrl}
                     alt="avatar"
                     width={40}
                     height={40}
@@ -145,21 +170,21 @@ export default function PostCard({
               </div>
             )}
             <div className={styles.userDetails}>
-              {userId ? (
-                <Link href={`/profile_show/${userId}`} className={styles.nicknameLink}>
-                  <div className={styles.nickname}>{nickname ?? "名無し"}</div>
+              {displayUserId ? (
+                <Link href={`/profile_show/${displayUserId}`} className={styles.nicknameLink}>
+                  <div className={styles.nickname}>{displayNickname ?? "名無し"}</div>
                 </Link>
               ) : (
-                <div className={styles.nickname}>{nickname ?? "名無し"}</div>
+                <div className={styles.nickname}>{displayNickname ?? "名無し"}</div>
               )}
-              <div className={styles.timestamp}>{new Date(createdAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</div>
+              <div className={styles.timestamp}>{new Date(displayCreatedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</div>
             </div>
           </div>
         </div>
 
         <div className={styles.body}>
-          <Link href={`/post/${postId}`} className={styles.postLink}>
-            <p className={styles.comment}>{comment}</p>
+          <Link href={`/post/${displayPostId}`} className={styles.postLink}>
+            <p className={styles.comment}>{displayComment}</p>
             
             {quotedPost && (
               <div className={styles.quotedPost}>
