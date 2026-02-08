@@ -74,6 +74,35 @@
   line-height: 1.6;
 }
 
+.followStats {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+  margin: 24px 0;
+  border-top: 2px solid var(--card-border);
+  border-bottom: 2px solid var(--card-border);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.statCount {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+
 .editButton {
   display: block;
   width: 100%;

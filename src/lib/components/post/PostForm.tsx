@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import styles from './PostForm.module.css';
+import { Globe, Lock } from 'lucide-react';
 
 export default function PostForm() {
     const [comment, setComment] = useState("");
+    const [isPrivate, setIsPrivate] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const supabase = createClient();
     const router = useRouter();
@@ -33,6 +35,7 @@ export default function PostForm() {
         const { error } = await supabase.from("post").insert({
             comment,
             user_id: userId,
+            is_private: isPrivate,
         });
 
         if (error) {
@@ -53,7 +56,26 @@ export default function PostForm() {
                 className={styles.textarea}
             />
 
-            <div className={styles.buttonContainer}>
+            <div className={styles.controls}>
+                <div className={styles.privacyToggle}>
+                    <button
+                        type="button"
+                        className={`${styles.privacyButton} ${!isPrivate ? styles.active : ''}`}
+                        onClick={() => setIsPrivate(false)}
+                    >
+                        <Globe size={18} />
+                        <span>公開</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`${styles.privacyButton} ${isPrivate ? styles.active : ''}`}
+                        onClick={() => setIsPrivate(true)}
+                    >
+                        <Lock size={18} />
+                        <span>限定</span>
+                    </button>
+                </div>
+
                 <button
                     type="submit"
                     className={styles.submitButton}
