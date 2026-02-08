@@ -1,0 +1,122 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: var(--background);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 600px;
+  padding: 16px 0;
+  border-bottom: 2px solid var(--card-border);
+  margin-bottom: 20px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.backButton:hover {
+  background: var(--input-bg);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mainPost {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.repliesSection {
+  width: 100%;
+}
+
+.repliesTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-left: 4px;
+}
+
+.repliesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.errorCard {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+}
+
+.errorCard h2 {
+  font-size: 20px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 24px;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.backLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(168, 162, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    padding: 12px 0;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .mainPost {
+    margin-bottom: 24px;
+  }
+
+  .repliesTitle {
+    font-size: 16px;
+  }
+}
