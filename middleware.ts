@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   
   if (geoBlockingEnabled) {
     // Vercelやその他のエッジプラットフォームが提供する国コードヘッダーを取得
-    const country = request.geo?.country || request.headers.get('x-vercel-ip-country') || request.headers.get('cf-ipcountry')
+    const country = request.headers.get('x-vercel-ip-country') || request.headers.get('cf-ipcountry')
     
     // 日本(JP)以外からのアクセスをブロック
     if (country && country !== 'JP') {
