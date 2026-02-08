@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment Variables
+
+### Geo-blocking Configuration
+
+このアプリケーションは、日本国外からのアクセスをブロックする機能を提供しています。
+
+`.env.local` ファイルに以下の環境変数を設定してください：
+
+```bash
+# 日本国外からのアクセスをブロックする場合は 'true' に設定
+NEXT_PUBLIC_GEO_BLOCKING_ENABLED=true
+```
+
+**注意事項:**
+- この機能は Vercel や Cloudflare などのエッジプラットフォームで動作します
+- ローカル開発環境では国コード情報が取得できないため、ブロックは行われません
+- 本番環境でテストする際は注意してください（VPN経由でアクセスする必要があります）
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

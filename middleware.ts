@@ -2,6 +2,30 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // ジオブロッキング: 日本国外からのアクセスをブロック
+  const geoBlockingEnabled = process.env.NEXT_PUBLIC_GEO_BLOCKING_ENABLED === 'true'
+  
+  if (geoBlockingEnabled) {
+    // Vercelやその他のエッジプラットフォームが提供する国コードヘッダーを取得
+    const country = request.geo?.country || request.headers.get('x-vercel-ip-country') || request.headers.get('cf-ipcountry')
+    
+    // 日本(JP)以外からのアクセスをブロック
+    if (country && country !== 'JP') {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Access denied',
+          message: 'このサービスは日本国内からのみアクセス可能です。',
+        }),
+        {
+          status: 403,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+    }
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
