@@ -390,7 +390,7 @@ export async function searchUsers(query: string) {
   
   const { data: users, error } = await supabase
     .from('profile')
-    .select('user_id, nickname, avatar_url, bio')
+    .select('id, nickname, avatar_url, intro')
     .ilike('nickname', `%${query}%`)
     .limit(20);
   
@@ -398,5 +398,13 @@ export async function searchUsers(query: string) {
     return { success: false, error: error.message, users: [] };
   }
   
-  return { success: true, users: users || [] };
+  // idをuser_idに、introをbioにマッピング
+  const mappedUsers = (users || []).map(user => ({
+    user_id: user.id,
+    nickname: user.nickname,
+    avatar_url: user.avatar_url,
+    bio: user.intro
+  }));
+  
+  return { success: true, users: mappedUsers };
 }

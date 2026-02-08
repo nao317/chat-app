@@ -61,7 +61,12 @@ export default function SearchPage() {
           <div className={styles.loadingState}>
             <p>検索中...</p>
           </div>
-        ) : hasSearched && results.length === 0 ? (
+        ) : !hasSearched ? (
+          <div className={styles.emptyState}>
+            <Search size={48} className={styles.emptyIcon} />
+            <p>ユーザー名を入力して検索してください</p>
+          </div>
+        ) : results.length === 0 ? (
           <div className={styles.emptyState}>
             <Search size={48} className={styles.emptyIcon} />
             <p>ユーザーが見つかりませんでした</p>
