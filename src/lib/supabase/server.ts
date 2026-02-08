@@ -24,9 +24,10 @@ export async function createClient() {
       },
       auth: {
         // トークンエラー時の自動リトライを無効化
-        autoRefreshToken: true,
+        autoRefreshToken: false,
         persistSession: true,
         detectSessionInUrl: false,
+        flowType: 'pkce',
       },
     }
   )

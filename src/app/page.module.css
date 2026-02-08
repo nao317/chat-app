@@ -12,6 +12,20 @@
   margin-top: 20px;
 }
 
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  background: var(--card-bg);
+  border: 2px dashed var(--card-border);
+  border-radius: 16px;
+}
+
+.emptyState p {
+  font-size: 16px;
+  font-weight: 500;
+}
+
 /* スマホ対応 */
 @media (max-width: 768px) {
   .container {
