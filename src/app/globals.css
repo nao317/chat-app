@@ -20,8 +20,30 @@
   --accent-peach: #ffd4b8;
 }
 
+[data-theme="dark"] {
+  /* Dark Theme - パステルカラー（暗め） */
+  --background: #2a2438;
+  --foreground: #e8e0f0;
+  --card-bg: #3d3550;
+  --card-border: #524663;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  --input-bg: #352e45;
+  --input-border: #524663;
+  --button-primary: #c288b7;
+  --button-primary-hover: #d4a0c9;
+  --button-secondary: #8dbfa8;
+  --button-secondary-hover: #a3cfba;
+  --text-primary: #e8e0f0;
+  --text-secondary: #c4b8d4;
+  --text-muted: #9a8fb0;
+  --accent-pink: #c288b7;
+  --accent-mint: #8dbfa8;
+  --accent-lavender: #a99bd4;
+  --accent-peach: #d4a788;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     /* Dark Theme - パステルカラー（暗め） */
     --background: #2a2438;
     --foreground: #e8e0f0;
@@ -71,8 +93,20 @@ a {
   text-decoration: none;
 }
 
+html {
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
 @media (prefers-color-scheme: dark) {
-  html {
+  html:not([data-theme="light"]) {
     color-scheme: dark;
   }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
 }

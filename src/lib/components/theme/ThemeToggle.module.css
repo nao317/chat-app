@@ -1,0 +1,46 @@
+.toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--card-shadow);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.toggle:hover {
+  transform: translateY(-2px) rotate(15deg);
+  box-shadow: 0 6px 16px var(--card-shadow);
+  background: var(--input-bg);
+}
+
+.toggle:active {
+  transform: translateY(0) rotate(0deg);
+}
+
+@media (max-width: 768px) {
+  .toggle {
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .toggle {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+  }
+}

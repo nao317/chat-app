@@ -328,3 +328,30 @@ export async function getFollowCounts(userId: string) {
     followingCount: followingCount || 0,
   };
 }
+
+// 相互フォローのユーザーIDリストを取得
+export async function getMutualFollowIds(userId: string) {
+  const supabase = await createClient();
+  
+  // 自分がフォローしているユーザー
+  const { data: following } = await supabase
+    .from('follow')
+    .select('following_id')
+    .eq('follower_id', userId);
+  
+  // 自分をフォローしているユーザー
+  const { data: followers } = await supabase
+    .from('follow')
+    .select('follower_id')
+    .eq('following_id', userId);
+  
+  if (!following || !followers) return [];
+  
+  const followingIds = new Set(following.map(f => f.following_id));
+  const followerIds = followers.map(f => f.follower_id);
+  
+  // 相互フォローのユーザーIDを抽出
+  const mutualIds = followerIds.filter(id => followingIds.has(id));
+  
+  return mutualIds;
+}

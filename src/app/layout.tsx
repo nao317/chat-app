@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import HamburgerMenu from "@/lib/components/navigation/HamburgerMenu";
+import ThemeToggle from "@/lib/components/theme/ThemeToggle";
 import { createClient } from "@/lib/supabase/server";
 
 const geistSans = Geist({
@@ -52,10 +53,9 @@ export default async function RootLayout({
     if (error) {
       console.error("Profile fetch error:", error);
     } else {
-      // キャッシュバスティングのためタイムスタンプを追加
       userProfile = {
         nickname: profile.nickname,
-        avatar_url: profile.avatar_url ? `${profile.avatar_url}?t=${Date.now()}` : null
+        avatar_url: profile.avatar_url
       };
     }
   }
@@ -63,6 +63,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <ThemeToggle />
         <HamburgerMenu 
           nickname={userProfile?.nickname || null}
           avatarUrl={userProfile?.avatar_url || null}

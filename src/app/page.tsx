@@ -1,10 +1,9 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 
-import PostCard from "@/lib/components/post/PostCard";
-import PostForm from "@/lib/components/post/PostForm";
 import { createClient } from "@/lib/supabase/server";
-import { getPostStats, getUserPostActions } from "@/lib/supabase/actions";
+import { getPostStats, getUserPostActions, getMutualFollowIds } from "@/lib/supabase/actions";
+import TimelineClient from "./TimelineClient";
 
 type PostWithAuthor = {
   id: number;
@@ -13,6 +12,7 @@ type PostWithAuthor = {
   user_id: string;
   parent_post_id: number | null;
   quote_of: number | null;
+  is_private: boolean;
   author: {
     nickname: string;
     avatar_url: string | null;
@@ -60,6 +60,9 @@ export default async function Home() {
   // 現在のユーザーを取得（エラーは無視）
   const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
+  // 相互フォローのユーザーIDを取得
+  const mutualFollowIds = user ? await getMutualFollowIds(user.id) : [];
+
   const { data: posts, error } = await supabase
     .from("post")
     .select(`
@@ -69,6 +72,7 @@ export default async function Home() {
       user_id,
       parent_post_id,
       quote_of,
+      is_private,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -83,8 +87,20 @@ export default async function Home() {
   }
 
   // 各投稿の統計情報とユーザーアクションを取得
+  // 限定ポストは相互フォローの場合のみ取得
   const postsWithStats = await Promise.all(
     (posts || []).map(async (post) => {
+      // 限定ポストで相互フォローでない場合はスキップ
+      if (post.is_private && user) {
+        const isMutual = mutualFollowIds.includes(post.user_id) || post.user_id === user.id;
+        if (!isMutual) {
+          return null;
+        }
+      } else if (post.is_private && !user) {
+        // ログインしていない場合は限定ポストを表示しない
+        return null;
+      }
+
       const stats = await getPostStats(post.id);
       const userActions = await getUserPostActions(post.id, user?.id || null);
       const parentPost = await getParentPostInfo(supabase, post.parent_post_id);
@@ -99,36 +115,10 @@ export default async function Home() {
     })
   );
 
+  // nullを除外
+  const filteredPosts = postsWithStats.filter(post => post !== null);
+
   return (
-    <div className={styles.container}>
-      <PostForm />
-      <div className={styles.postsContainer}>
-        {postsWithStats?.map((post) => (
-          <PostCard
-            key={post.id}
-            postId={post.id}
-            comment={post.comment}
-            nickname={post.author?.nickname ?? "名無し"}
-            avatarUrl={post.author?.avatar_url}
-            createdAt={post.created_at}
-            userId={post.user_id}
-            likeCount={post.likeCount}
-            repostCount={post.repostCount}
-            replyCount={post.replyCount}
-            bookmarkCount={post.bookmarkCount}
-            isLiked={post.isLiked}
-            isBookmarked={post.isBookmarked}
-            isReposted={post.isReposted}
-            replyToNickname={post.parent_post?.author?.nickname}
-            replyToUserId={post.parent_post?.user_id}
-            quotedPost={post.quoted_post ? {
-              comment: post.quoted_post.comment,
-              nickname: post.quoted_post.author?.nickname ?? "名無し",
-              userId: post.quoted_post.user_id,
-            } : undefined}
-          />
-        ))}
-      </div>
-    </div>
+    <TimelineClient initialPosts={filteredPosts} />
   );
 }
