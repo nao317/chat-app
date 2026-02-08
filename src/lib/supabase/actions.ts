@@ -408,3 +408,120 @@ export async function searchUsers(query: string) {
   
   return { success: true, users: mappedUsers };
 }
+
+// タイムライン投稿取得（ページネーション対応）
+export async function getTimelinePosts(offset: number = 0, limit: number = 30) {
+  const supabase = await createClient();
+  
+  // 現在のユーザーを取得（エラーは無視）
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+
+  // 相互フォローのユーザーIDを取得
+  const mutualFollowIds = user ? await getMutualFollowIds(user.id, supabase) : [];
+
+  const { data: posts, error } = await supabase
+    .from("post")
+    .select(`
+      id,
+      comment,
+      created_at,
+      user_id,
+      parent_post_id,
+      quote_of,
+      repost_of,
+      is_private,
+      author:profile!post_user_id_fkey (
+        nickname,
+        avatar_url
+      )
+    `)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error(error);
+    return { success: false, posts: [], hasMore: false };
+  }
+
+  // 親投稿情報取得
+  async function getParentPostInfo(parentPostId: number | null) {
+    if (!parentPostId) return null;
+    
+    const { data } = await supabase
+      .from("post")
+      .select(`
+        user_id,
+        author:profile!post_user_id_fkey (
+          nickname
+        )
+      `)
+      .eq("id", parentPostId)
+      .single();
+      
+    return data;
+  }
+
+  // 引用投稿情報取得
+  async function getQuotedPostInfo(quotedPostId: number | null) {
+    if (!quotedPostId) return null;
+    
+    const { data } = await supabase
+      .from("post")
+      .select(`
+        comment,
+        user_id,
+        author:profile!post_user_id_fkey (
+          nickname
+        )
+      `)
+      .eq("id", quotedPostId)
+      .single();
+      
+    return data;
+  }
+
+  // 各投稿の統計情報とユーザーアクションを取得
+  const postsWithStats = await Promise.all(
+    (posts || []).map(async (post: any) => {
+      // 限定ポストで相互フォローでない場合はスキップ
+      if (post.is_private && user) {
+        const isMutual = mutualFollowIds.includes(post.user_id) || post.user_id === user.id;
+        if (!isMutual) {
+          return null;
+        }
+      } else if (post.is_private && !user) {
+        // ログインしていない場合は限定ポストを表示しない
+        return null;
+      }
+
+      const stats = await getPostStats(post.id, supabase);
+      const userActions = await getUserPostActions(post.id, user?.id || null, supabase);
+      const parentPost = await getParentPostInfo(post.parent_post_id);
+      const quotedPost = await getQuotedPostInfo(post.quote_of);
+      const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
+      
+      // authorが配列の場合、最初の要素を取得
+      const normalizedRepostedPost = repostedPost ? {
+        ...repostedPost,
+        author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+      } : null;
+      
+      return {
+        ...post,
+        ...stats,
+        ...userActions,
+        parent_post: parentPost,
+        quoted_post: quotedPost,
+        reposted_post: normalizedRepostedPost,
+      };
+    })
+  );
+
+  // nullを除外
+  const filteredPosts = postsWithStats.filter(post => post !== null);
+
+  // 次のページがあるかチェック（取得した件数がlimitと同じなら次がある可能性）
+  const hasMore = posts.length === limit;
+
+  return { success: true, posts: filteredPosts, hasMore };
+}

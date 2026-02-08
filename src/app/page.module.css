@@ -26,6 +26,38 @@
   font-weight: 500;
 }
 
+.loadMoreContainer {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0;
+  padding: 0 16px;
+}
+
+.loadMoreButton {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.loadMoreButton:hover:not(:disabled) {
+  background: var(--card-hover-bg);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* スマホ対応 */
 @media (max-width: 768px) {
   .container {

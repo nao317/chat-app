@@ -4,6 +4,7 @@ import { useState } from 'react';
 import PostCard from "@/lib/components/post/PostCard";
 import PostForm from "@/lib/components/post/PostForm";
 import TimelineTabs from "@/lib/components/timeline/TimelineTabs";
+import { getTimelinePosts } from "@/lib/supabase/actions";
 import styles from "./page.module.css";
 
 type Post = {
@@ -50,12 +51,33 @@ type Post = {
 
 type Props = {
   initialPosts: Post[];
+  initialHasMore: boolean;
 };
 
-export default function TimelineClient({ initialPosts }: Props) {
+export default function TimelineClient({ initialPosts, initialHasMore }: Props) {
   const [activeTab, setActiveTab] = useState<'global' | 'private'>('global');
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loading, setLoading] = useState(false);
 
-  const filteredPosts = initialPosts.filter(post => {
+  const loadMorePosts = async () => {
+    if (loading || !hasMore) return;
+    
+    setLoading(true);
+    try {
+      const result = await getTimelinePosts(posts.length, 30);
+      if (result.success && result.posts) {
+        setPosts(prev => [...prev, ...result.posts]);
+        setHasMore(result.hasMore);
+      }
+    } catch (error) {
+      console.error('投稿の読み込みに失敗しました:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPosts = posts.filter(post => {
     if (activeTab === 'global') {
       return !post.is_private;
     } else {
@@ -77,7 +99,8 @@ export default function TimelineClient({ initialPosts }: Props) {
             </p>
           </div>
         ) : (
-          filteredPosts.map((post) => (
+          <>
+            {filteredPosts.map((post) => (
             <PostCard
               key={post.id}
               postId={post.id}
@@ -109,9 +132,22 @@ export default function TimelineClient({ initialPosts }: Props) {
                 createdAt: post.reposted_post.created_at,
               } : undefined}
             />
-          ))
+          ))}
+          </>
         )}
       </div>
+      
+      {hasMore && filteredPosts.length > 0 && (
+        <div className={styles.loadMoreContainer}>
+          <button 
+            onClick={loadMorePosts} 
+            disabled={loading}
+            className={styles.loadMoreButton}
+          >
+            {loading ? '読み込み中...' : 'もっと見る'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
