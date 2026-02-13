@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from "./PostCard.module.css";
 import Image from "next/image";
 import Link from "next/link";
@@ -72,6 +72,25 @@ export default function PostCard({
   const [showRepostMenu, setShowRepostMenu] = useState(false);
   const router = useRouter();
 
+  // メニュー外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showRepostMenu) {
+        const target = event.target as HTMLElement;
+        if (!target.closest(`.${styles.repostContainer}`)) {
+          setShowRepostMenu(false);
+        }
+      }
+    };
+
+    if (showRepostMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showRepostMenu]);
+
   // リポストの場合は元の投稿の情報を使用
   const displayPostId = repostedPost?.id || postId;
   const displayComment = repostedPost?.comment || comment;
@@ -119,7 +138,7 @@ export default function PostCard({
 
   return (
     <>
-      <div className={styles.card}>
+      <div className={`${styles.card} ${showRepostMenu ? styles.cardElevated : ''}`}>
         {repostedPost && (
           <div className={styles.repostInfo}>
             <Repeat2 size={14} />
