@@ -109,6 +109,7 @@ export default function TimelineClient({ initialPosts, initialHasMore }: Props) 
               avatarUrl={post.author?.avatar_url}
               createdAt={post.created_at}
               userId={post.user_id}
+              isPrivate={post.is_private}
               likeCount={post.likeCount}
               repostCount={post.repostCount}
               replyCount={post.replyCount}

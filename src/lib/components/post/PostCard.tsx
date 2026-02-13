@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 
-import { Heart, MessageCircle, Repeat2, Bookmark, Quote } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Bookmark, Quote, Lock } from "lucide-react";
 import { toggleLike, toggleBookmark, createRepost } from '@/lib/supabase/actions';
 import ReplyModal from './ReplyModal';
 import QuoteModal from './QuoteModal';
@@ -25,6 +25,7 @@ type Props = {
   isLiked?: boolean;
   isBookmarked?: boolean;
   isReposted?: boolean;
+  isPrivate?: boolean;
   replyToNickname?: string;
   replyToUserId?: string;
   quotedPost?: {
@@ -56,6 +57,7 @@ export default function PostCard({
   isLiked: initialIsLiked = false,
   isBookmarked: initialIsBookmarked = false,
   isReposted: initialIsReposted = false,
+  isPrivate = false,
   replyToNickname,
   replyToUserId,
   quotedPost,
@@ -191,10 +193,16 @@ export default function PostCard({
             <div className={styles.userDetails}>
               {displayUserId ? (
                 <Link href={`/profile_show/${displayUserId}`} className={styles.nicknameLink}>
-                  <div className={styles.nickname}>{displayNickname ?? "名無し"}</div>
+                  <div className={styles.nicknameContainer}>
+                    <span className={styles.nickname}>{displayNickname ?? "名無し"}</span>
+                    {isPrivate && <Lock size={14} className={styles.privateIcon} />}
+                  </div>
                 </Link>
               ) : (
-                <div className={styles.nickname}>{displayNickname ?? "名無し"}</div>
+                <div className={styles.nicknameContainer}>
+                  <span className={styles.nickname}>{displayNickname ?? "名無し"}</span>
+                  {isPrivate && <Lock size={14} className={styles.privateIcon} />}
+                </div>
               )}
               <div className={styles.timestamp}>{new Date(displayCreatedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}</div>
             </div>

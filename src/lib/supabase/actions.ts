@@ -577,6 +577,7 @@ export async function getTimelinePosts(offset: number = 0, limit: number = 30) {
       
       return {
         ...post,
+        author: Array.isArray(post.author) ? post.author[0] : post.author,
         ...stats,
         ...userActions,
         parent_post: parentPost,
