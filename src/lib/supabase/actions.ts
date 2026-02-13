@@ -5,9 +5,9 @@ import { createClient } from './server';
 // いいね機能
 export async function toggleLike(postId: number) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -41,9 +41,9 @@ export async function toggleLike(postId: number) {
 // ブックマーク機能
 export async function toggleBookmark(postId: number) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -77,9 +77,9 @@ export async function toggleBookmark(postId: number) {
 // リポスト機能
 export async function createRepost(postId: number) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -116,9 +116,9 @@ export async function createRepost(postId: number) {
 // 引用リポスト機能
 export async function createQuotePost(postId: number, comment: string) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -126,12 +126,30 @@ export async function createQuotePost(postId: number, comment: string) {
     return { success: false, error: 'コメントを入力してください' };
   }
 
+  // 元の投稿のis_privateを取得
+  const { data: originalPost } = await supabase
+    .from('post')
+    .select('is_private, user_id')
+    .eq('id', postId)
+    .single();
+
+  // 限定ポストの場合、権限チェック
+  if (originalPost?.is_private) {
+    const mutualFollowIds = await getMutualFollowIds(user.id, supabase);
+    const hasAccess = originalPost.user_id === user.id || mutualFollowIds.includes(originalPost.user_id);
+    
+    if (!hasAccess) {
+      return { success: false, error: 'この投稿を引用する権限がありません' };
+    }
+  }
+
   const { error } = await supabase
     .from('post')
     .insert({ 
       quote_of: postId, 
       user_id: user.id,
-      comment
+      comment,
+      is_private: originalPost?.is_private || false
     });
   
   return { success: !error, error: error?.message };
@@ -140,9 +158,9 @@ export async function createQuotePost(postId: number, comment: string) {
 // 返信機能
 export async function createReply(parentPostId: number, comment: string) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -150,12 +168,30 @@ export async function createReply(parentPostId: number, comment: string) {
     return { success: false, error: 'コメントを入力してください' };
   }
 
+  // 元の投稿のis_privateを取得
+  const { data: parentPost } = await supabase
+    .from('post')
+    .select('is_private, user_id')
+    .eq('id', parentPostId)
+    .single();
+
+  // 限定ポストの場合、権限チェック
+  if (parentPost?.is_private) {
+    const mutualFollowIds = await getMutualFollowIds(user.id, supabase);
+    const hasAccess = parentPost.user_id === user.id || mutualFollowIds.includes(parentPost.user_id);
+    
+    if (!hasAccess) {
+      return { success: false, error: 'この投稿に返信する権限がありません' };
+    }
+  }
+
   const { error } = await supabase
     .from('post')
     .insert({ 
       parent_post_id: parentPostId, 
       user_id: user.id,
-      comment
+      comment,
+      is_private: parentPost?.is_private || false
     });
   
   return { success: !error, error: error?.message };
@@ -164,9 +200,9 @@ export async function createReply(parentPostId: number, comment: string) {
 // フォロー機能
 export async function toggleFollow(targetUserId: string) {
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
   
-  if (authError || !user) {
+  if (!user) {
     return { success: false, error: 'ログインが必要です' };
   }
 
@@ -369,6 +405,7 @@ export async function getRepostedPostInfo(repostOfId: number | null, supabaseCli
       comment,
       user_id,
       created_at,
+      is_private,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -451,12 +488,20 @@ export async function getTimelinePosts(offset: number = 0, limit: number = 30) {
       .from("post")
       .select(`
         user_id,
+        is_private,
         author:profile!post_user_id_fkey (
           nickname
         )
       `)
       .eq("id", parentPostId)
       .single();
+      
+    // 親投稿が限定投稿の場合、権限チェック
+    if (data?.is_private) {
+      if (!user) return null;
+      const isMutual = mutualFollowIds.includes(data.user_id) || data.user_id === user.id;
+      if (!isMutual) return null;
+    }
       
     return data;
   }
@@ -470,12 +515,20 @@ export async function getTimelinePosts(offset: number = 0, limit: number = 30) {
       .select(`
         comment,
         user_id,
+        is_private,
         author:profile!post_user_id_fkey (
           nickname
         )
       `)
       .eq("id", quotedPostId)
       .single();
+      
+    // 引用元が限定投稿の場合、権限チェック
+    if (data?.is_private) {
+      if (!user) return null;
+      const isMutual = mutualFollowIds.includes(data.user_id) || data.user_id === user.id;
+      if (!isMutual) return null;
+    }
       
     return data;
   }
@@ -500,11 +553,27 @@ export async function getTimelinePosts(offset: number = 0, limit: number = 30) {
       const quotedPost = await getQuotedPostInfo(post.quote_of);
       const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
       
-      // authorが配列の場合、最初の要素を取得
-      const normalizedRepostedPost = repostedPost ? {
-        ...repostedPost,
-        author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
-      } : null;
+      // リポスト元が限定投稿の場合、権限チェック
+      let normalizedRepostedPost = null;
+      if (repostedPost) {
+        if (repostedPost.is_private) {
+          if (user) {
+            const isMutual = mutualFollowIds.includes(repostedPost.user_id) || repostedPost.user_id === user.id;
+            if (isMutual) {
+              normalizedRepostedPost = {
+                ...repostedPost,
+                author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+              };
+            }
+          }
+          // ログインしていない場合はnull
+        } else {
+          normalizedRepostedPost = {
+            ...repostedPost,
+            author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+          };
+        }
+      }
       
       return {
         ...post,
