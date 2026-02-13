@@ -26,6 +26,26 @@ type PostWithAuthor = {
   }>;
 };
 
+/**
+ * 投稿へのアクセス権限をチェックするヘルパー関数
+ * @param post チェック対象の投稿（is_privateとuser_idを含む）
+ * @param user 現在のユーザー（nullの場合は未ログイン）
+ * @param mutualFollowIds 相互フォローのユーザーIDリスト
+ * @returns アクセス可能な場合true、不可の場合false
+ */
+function checkPostAccess(
+  post: { is_private?: boolean; user_id: string } | null,
+  user: { id: string } | null,
+  mutualFollowIds: string[]
+): boolean {
+  if (!post) return true; // 投稿が存在しない場合はスキップ
+  if (!post.is_private) return true; // 公開投稿は誰でもアクセス可能
+  if (!user) return false; // 限定投稿でログインしていない場合はアクセス不可
+  
+  // 投稿者自身または相互フォローの場合はアクセス可能
+  return post.user_id === user.id || mutualFollowIds.includes(post.user_id);
+}
+
 async function getParentPostInfo(supabase: any, parentPostId: number | null) {
   if (!parentPostId) return null;
   
@@ -112,7 +132,7 @@ export default async function PostDetail({ params }: Props) {
   }
 
   // 限定ポストの権限チェック
-  if (post.is_private) {
+  if (!checkPostAccess(post, user, mutualFollowIds)) {
     if (!user) {
       return (
         <div className={styles.container}>
@@ -128,23 +148,18 @@ export default async function PostDetail({ params }: Props) {
       );
     }
 
-    // 相互フォローチェック
-    const hasAccess = post.user_id === user.id || mutualFollowIds.includes(post.user_id);
-
-    if (!hasAccess) {
-      return (
-        <div className={styles.container}>
-          <div className={styles.errorCard}>
-            <h2>この投稿を表示する権限がありません</h2>
-            <p>この投稿は限定公開されています。</p>
-            <Link href="/" className={styles.backLink}>
-              <ArrowLeft size={20} />
-              ホームに戻る
-            </Link>
-          </div>
+    return (
+      <div className={styles.container}>
+        <div className={styles.errorCard}>
+          <h2>この投稿を表示する権限がありません</h2>
+          <p>この投稿は限定公開されています。</p>
+          <Link href="/" className={styles.backLink}>
+            <ArrowLeft size={20} />
+            ホームに戻る
+          </Link>
         </div>
-      );
-    }
+      </div>
+    );
   }
 
   // 返信を取得（再帰的に取得）
@@ -173,53 +188,16 @@ export default async function PostDetail({ params }: Props) {
   const quotedPost = await getQuotedPostInfo(supabase, post.quote_of);
   const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
   
-  // 親投稿が限定投稿の場合、権限チェック
-  let validParentPost = parentPost;
-  if (parentPost?.is_private) {
-    if (!user) {
-      validParentPost = null;
-    } else {
-      const hasAccessToParent = parentPost.user_id === user.id || mutualFollowIds.includes(parentPost.user_id);
-      if (!hasAccessToParent) {
-        validParentPost = null;
-      }
-    }
-  }
+  // アクセス権限チェックを使用してフィルタリング
+  const validParentPost = checkPostAccess(parentPost, user, mutualFollowIds) ? parentPost : null;
+  const validQuotedPost = checkPostAccess(quotedPost, user, mutualFollowIds) ? quotedPost : null;
   
-  // 引用元が限定投稿の場合、権限チェック
-  let validQuotedPost = quotedPost;
-  if (quotedPost?.is_private) {
-    if (!user) {
-      validQuotedPost = null;
-    } else {
-      const hasAccessToQuote = quotedPost.user_id === user.id || mutualFollowIds.includes(quotedPost.user_id);
-      if (!hasAccessToQuote) {
-        validQuotedPost = null;
-      }
-    }
-  }
-  
-  // リポスト元が限定投稿の場合、権限チェック
-  let normalizedRepostedPost = null;
-  if (repostedPost) {
-    if (repostedPost.is_private) {
-      if (user) {
-        const hasAccessToRepost = repostedPost.user_id === user.id || mutualFollowIds.includes(repostedPost.user_id);
-        if (hasAccessToRepost) {
-          normalizedRepostedPost = {
-            ...repostedPost,
-            author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
-          };
-        }
-      }
-      // ログインしていない場合はnull
-    } else {
-      normalizedRepostedPost = {
+  const normalizedRepostedPost = repostedPost && checkPostAccess(repostedPost, user, mutualFollowIds)
+    ? {
         ...repostedPost,
         author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
-      };
-    }
-  }
+      }
+    : null;
 
   // 統計情報とユーザーアクションを取得
   const postStats = await getPostStats(post.id, supabase);
@@ -232,39 +210,14 @@ export default async function PostDetail({ params }: Props) {
       const replyQuotedPost = await getQuotedPostInfo(supabase, reply.quote_of);
       const replyRepostedPost = await getRepostedPostInfo(reply.repost_of, supabase);
       
-      // 引用元が限定投稿の場合、権限チェック
-      let validQuotedPost = replyQuotedPost;
-      if (replyQuotedPost?.is_private) {
-        if (!user) {
-          validQuotedPost = null;
-        } else {
-          const hasAccessToQuote = replyQuotedPost.user_id === user.id || mutualFollowIds.includes(replyQuotedPost.user_id);
-          if (!hasAccessToQuote) {
-            validQuotedPost = null;
-          }
-        }
-      }
-      
-      // リポスト元が限定投稿の場合、権限チェック
-      let normalizedReplyRepostedPost = null;
-      if (replyRepostedPost) {
-        if (replyRepostedPost.is_private) {
-          if (user) {
-            const hasAccessToRepost = replyRepostedPost.user_id === user.id || mutualFollowIds.includes(replyRepostedPost.user_id);
-            if (hasAccessToRepost) {
-              normalizedReplyRepostedPost = {
-                ...replyRepostedPost,
-                author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
-              };
-            }
-          }
-        } else {
-          normalizedReplyRepostedPost = {
+      // アクセス権限チェックを使用してフィルタリング
+      const validQuotedPost = checkPostAccess(replyQuotedPost, user, mutualFollowIds) ? replyQuotedPost : null;
+      const normalizedReplyRepostedPost = replyRepostedPost && checkPostAccess(replyRepostedPost, user, mutualFollowIds)
+        ? {
             ...replyRepostedPost,
             author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
-          };
-        }
-      }
+          }
+        : null;
       
       return { ...reply, ...stats, ...actions, quoted_post: validQuotedPost, reposted_post: normalizedReplyRepostedPost };
     })
@@ -289,6 +242,7 @@ export default async function PostDetail({ params }: Props) {
             avatarUrl={validParentPost.author?.[0]?.avatar_url}
             createdAt={validParentPost.created_at}
             userId={validParentPost.user_id}
+            isPrivate={validParentPost.is_private}
             likeCount={0}
             repostCount={0}
             replyCount={0}
@@ -308,6 +262,7 @@ export default async function PostDetail({ params }: Props) {
           avatarUrl={post.author?.[0]?.avatar_url}
           createdAt={post.created_at}
           userId={post.user_id}
+          isPrivate={post.is_private}
           likeCount={postStats.likeCount}
           repostCount={postStats.repostCount}
           replyCount={postStats.replyCount}
@@ -346,6 +301,7 @@ export default async function PostDetail({ params }: Props) {
                 avatarUrl={reply.author?.[0]?.avatar_url}
                 createdAt={reply.created_at}
                 userId={reply.user_id}
+                isPrivate={reply.is_private}
                 likeCount={reply.likeCount}
                 repostCount={reply.repostCount}
                 replyCount={reply.replyCount}

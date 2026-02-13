@@ -70,9 +70,14 @@ export async function middleware(request: NextRequest) {
           supabaseResponse.cookies.delete(cookie.name)
         }
       })
+    } else if (error && process.env.NODE_ENV === 'development') {
+      // 開発環境でのみその他のエラーをログ出力
+      console.error('Middleware auth error:', error.message);
     }
   } catch (error) {
-    // 予期しないエラーは静かに無視（ログインが必要なページは個別に処理）
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Middleware unexpected error:', error);
+    }
   }
 
   return supabaseResponse

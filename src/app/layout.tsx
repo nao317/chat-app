@@ -33,10 +33,14 @@ export default async function RootLayout({
     const { data, error } = await supabase.auth.getUser();
     if (!error) {
       user = data.user;
+    } else if (process.env.NODE_ENV === 'development') {
+      // 開発環境でのみエラーログを出力
+      console.error('Auth error:', error.message);
     }
-    // リフレッシュトークンエラーの場合は無視してログアウト状態として扱う
   } catch (error) {
-    // 予期しないエラーも無視
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Unexpected auth error:', error);
+    }
   }
 
   let userProfile = null;
