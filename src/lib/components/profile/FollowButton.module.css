@@ -29,9 +29,9 @@
 
 .followButton {
   padding: 10px 32px;
-  border: 2px solid var(--accent-lavender);
+  border: 2px solid var(--button-primary);
   border-radius: 24px;
-  background: linear-gradient(135deg, var(--accent-mint) 0%, var(--accent-lavender) 100%);
+  background: var(--button-primary);
   color: white;
   font-size: 16px;
   font-weight: 600;

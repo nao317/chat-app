@@ -11,21 +11,6 @@ type Props = {
   }>;
 };
 
-type PostWithAuthor = {
-  id: number;
-  comment: string;
-  created_at: string;
-  user_id: string;
-  parent_post_id: number | null;
-  quote_of: number | null;
-  repost_of: number | null;
-  is_private: boolean;
-  author: Array<{
-    nickname: string;
-    avatar_url: string | null;
-  }>;
-};
-
 /**
  * 投稿へのアクセス権限をチェックするヘルパー関数
  * @param post チェック対象の投稿（is_privateとuser_idを含む）
@@ -49,42 +34,59 @@ function checkPostAccess(
 async function getParentPostInfo(supabase: any, parentPostId: number | null) {
   if (!parentPostId) return null;
   
-  const { data } = await supabase
+  const { data: post } = await supabase
     .from("post")
     .select(`
       id,
       comment,
       created_at,
       user_id,
-      is_private,
-      author:profile!post_user_id_fkey (
-        nickname,
-        avatar_url
-      )
+      is_private
     `)
     .eq("id", parentPostId)
     .single();
     
-  return data;
+  if (!post) return null;
+  
+  // user_idからprofileを取得
+  const { data: profile } = await supabase
+    .from("profile")
+    .select("nickname, avatar_url")
+    .eq("id", post.user_id)
+    .single();
+    
+  return {
+    ...post,
+    author: profile || { nickname: "名無し", avatar_url: null }
+  };
 }
 
 async function getQuotedPostInfo(supabase: any, quotedPostId: number | null) {
   if (!quotedPostId) return null;
   
-  const { data } = await supabase
+  const { data: post } = await supabase
     .from("post")
     .select(`
       comment,
       user_id,
-      is_private,
-      author:profile!post_user_id_fkey (
-        nickname
-      )
+      is_private
     `)
     .eq("id", quotedPostId)
     .single();
     
-  return data;
+  if (!post) return null;
+  
+  // user_idからprofileを取得
+  const { data: profile } = await supabase
+    .from("profile")
+    .select("nickname, avatar_url")
+    .eq("id", post.user_id)
+    .single();
+    
+  return {
+    ...post,
+    author: profile || { nickname: "名無し", avatar_url: null }
+  };
 }
 
 export default async function PostDetail({ params }: Props) {
@@ -108,11 +110,7 @@ export default async function PostDetail({ params }: Props) {
       parent_post_id,
       quote_of,
       repost_of,
-      is_private,
-      author:profile!post_user_id_fkey (
-        nickname,
-        avatar_url
-      )
+      is_private
     `)
     .eq("id", post_id)
     .single();
@@ -131,8 +129,20 @@ export default async function PostDetail({ params }: Props) {
     );
   }
 
+  // user_idからprofileを取得
+  const { data: postProfile } = await supabase
+    .from("profile")
+    .select("nickname, avatar_url")
+    .eq("id", post.user_id)
+    .single();
+  
+  const postWithAuthor = {
+    ...post,
+    author: postProfile || { nickname: "名無し", avatar_url: null }
+  };
+
   // 限定ポストの権限チェック
-  if (!checkPostAccess(post, user, mutualFollowIds)) {
+  if (!checkPostAccess(postWithAuthor, user, mutualFollowIds)) {
     if (!user) {
       return (
         <div className={styles.container}>
@@ -163,7 +173,7 @@ export default async function PostDetail({ params }: Props) {
   }
 
   // 返信を取得（再帰的に取得）
-  const { data: replies } = await supabase
+  const { data: repliesData } = await supabase
     .from("post")
     .select(`
       id,
@@ -173,15 +183,26 @@ export default async function PostDetail({ params }: Props) {
       parent_post_id,
       quote_of,
       repost_of,
-      is_private,
-      author:profile!post_user_id_fkey (
-        nickname,
-        avatar_url
-      )
+      is_private
     `)
     .eq("parent_post_id", post_id)
-    .order("created_at", { ascending: true })
-    .returns<PostWithAuthor[]>();
+    .order("created_at", { ascending: true });
+  
+  // 各返信のprofileデータを取得
+  const replies = repliesData ? await Promise.all(
+    repliesData.map(async (reply) => {
+      const { data: profile } = await supabase
+        .from("profile")
+        .select("nickname, avatar_url")
+        .eq("id", reply.user_id)
+        .single();
+      
+      return {
+        ...reply,
+        author: profile || { nickname: "名無し", avatar_url: null }
+      };
+    })
+  ) : [];
 
   // 親投稿と引用投稿情報を取得
   const parentPost = await getParentPostInfo(supabase, post.parent_post_id);
@@ -200,8 +221,8 @@ export default async function PostDetail({ params }: Props) {
     : null;
 
   // 統計情報とユーザーアクションを取得
-  const postStats = await getPostStats(post.id, supabase);
-  const postActions = await getUserPostActions(post.id, user?.id || null, supabase);
+  const postStats = await getPostStats(postWithAuthor.id, supabase);
+  const postActions = await getUserPostActions(postWithAuthor.id, user?.id || null, supabase);
 
   const repliesWithStats = await Promise.all(
     (replies || []).map(async (reply) => {
@@ -238,8 +259,8 @@ export default async function PostDetail({ params }: Props) {
           <PostCard
             postId={validParentPost.id}
             comment={validParentPost.comment}
-            nickname={validParentPost.author?.[0]?.nickname ?? "名無し"}
-            avatarUrl={validParentPost.author?.[0]?.avatar_url}
+            nickname={validParentPost.author.nickname}
+            avatarUrl={validParentPost.author.avatar_url}
             createdAt={validParentPost.created_at}
             userId={validParentPost.user_id}
             isPrivate={validParentPost.is_private}
@@ -256,13 +277,13 @@ export default async function PostDetail({ params }: Props) {
 
       <div className={styles.mainPost}>
         <PostCard
-          postId={post.id}
-          comment={post.comment}
-          nickname={post.author?.[0]?.nickname ?? "名無し"}
-          avatarUrl={post.author?.[0]?.avatar_url}
-          createdAt={post.created_at}
-          userId={post.user_id}
-          isPrivate={post.is_private}
+          postId={postWithAuthor.id}
+          comment={postWithAuthor.comment}
+          nickname={postWithAuthor.author.nickname}
+          avatarUrl={postWithAuthor.author.avatar_url}
+          createdAt={postWithAuthor.created_at}
+          userId={postWithAuthor.user_id}
+          isPrivate={postWithAuthor.is_private}
           likeCount={postStats.likeCount}
           repostCount={postStats.repostCount}
           replyCount={postStats.replyCount}
@@ -270,17 +291,17 @@ export default async function PostDetail({ params }: Props) {
           isLiked={postActions.isLiked}
           isBookmarked={postActions.isBookmarked}
           isReposted={postActions.isReposted}
-          replyToNickname={validParentPost?.author?.[0]?.nickname}
+          replyToNickname={validParentPost?.author.nickname}
           replyToUserId={validParentPost?.user_id}
           quotedPost={validQuotedPost ? {
             comment: validQuotedPost.comment,
-            nickname: validQuotedPost.author?.nickname ?? "名無し",
+            nickname: validQuotedPost.author.nickname,
             userId: validQuotedPost.user_id,
           } : undefined}
           repostedPost={normalizedRepostedPost ? {
             id: normalizedRepostedPost.id,
             comment: normalizedRepostedPost.comment,
-            nickname: normalizedRepostedPost.author?.nickname ?? "名無し",
+            nickname: normalizedRepostedPost.author?.nickname || "名無し",
             avatarUrl: normalizedRepostedPost.author?.avatar_url || null,
             userId: normalizedRepostedPost.user_id,
             createdAt: normalizedRepostedPost.created_at,
@@ -297,8 +318,8 @@ export default async function PostDetail({ params }: Props) {
                 key={reply.id}
                 postId={reply.id}
                 comment={reply.comment}
-                nickname={reply.author?.[0]?.nickname ?? "名無し"}
-                avatarUrl={reply.author?.[0]?.avatar_url}
+                nickname={reply.author.nickname}
+                avatarUrl={reply.author.avatar_url}
                 createdAt={reply.created_at}
                 userId={reply.user_id}
                 isPrivate={reply.is_private}
@@ -311,13 +332,13 @@ export default async function PostDetail({ params }: Props) {
                 isReposted={reply.isReposted}
                 quotedPost={reply.quoted_post ? {
                   comment: reply.quoted_post.comment,
-                  nickname: reply.quoted_post.author?.nickname ?? "名無し",
+                  nickname: reply.quoted_post.author.nickname,
                   userId: reply.quoted_post.user_id,
                 } : undefined}
                 repostedPost={reply.reposted_post ? {
                   id: reply.reposted_post.id,
                   comment: reply.reposted_post.comment,
-                  nickname: reply.reposted_post.author?.nickname ?? "名無し",
+                  nickname: reply.reposted_post.author?.nickname || "名無し",
                   avatarUrl: reply.reposted_post.author?.avatar_url || null,
                   userId: reply.reposted_post.user_id,
                   createdAt: reply.reposted_post.created_at,
