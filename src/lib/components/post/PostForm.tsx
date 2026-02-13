@@ -16,7 +16,7 @@ export default function PostForm() {
     useEffect(() => {
         // 現在のユーザーIDを取得
         const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
             setUserId(user?.id || null);
         };
         getUser();

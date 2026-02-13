@@ -8,11 +8,16 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: visible;
   position: relative;
+  z-index: 1;
 }
 
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--card-shadow);
+}
+
+.cardElevated {
+  z-index: 100 !important;
 }
 
 .replyInfo {

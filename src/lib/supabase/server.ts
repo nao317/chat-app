@@ -23,8 +23,8 @@ export async function createClient() {
         },
       },
       auth: {
-        // トークンエラー時の自動リトライを無効化
-        autoRefreshToken: false,
+        // トークンの自動リフレッシュを有効化
+        autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
         flowType: 'pkce',

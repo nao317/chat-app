@@ -6,7 +6,7 @@ export default async function ProfileShow() {
 
     const {
         data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
     if (!user) {
         redirect("/login");

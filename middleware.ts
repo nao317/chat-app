@@ -72,8 +72,7 @@ export async function middleware(request: NextRequest) {
       })
     }
   } catch (error) {
-    // 予期しないエラーはログに記録して続行
-    console.log('Middleware auth error:', error)
+    // 予期しないエラーは静かに無視（ログインが必要なページは個別に処理）
   }
 
   return supabaseResponse

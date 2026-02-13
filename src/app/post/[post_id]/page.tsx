@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import PostCard from "@/lib/components/post/PostCard";
-import { getPostStats, getUserPostActions, getRepostedPostInfo } from "@/lib/supabase/actions";
+import { getPostStats, getUserPostActions, getRepostedPostInfo, getMutualFollowIds } from "@/lib/supabase/actions";
 import styles from "./postDetail.module.css";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -19,6 +19,7 @@ type PostWithAuthor = {
   parent_post_id: number | null;
   quote_of: number | null;
   repost_of: number | null;
+  is_private: boolean;
   author: Array<{
     nickname: string;
     avatar_url: string | null;
@@ -31,9 +32,14 @@ async function getParentPostInfo(supabase: any, parentPostId: number | null) {
   const { data } = await supabase
     .from("post")
     .select(`
+      id,
+      comment,
+      created_at,
       user_id,
+      is_private,
       author:profile!post_user_id_fkey (
-        nickname
+        nickname,
+        avatar_url
       )
     `)
     .eq("id", parentPostId)
@@ -50,6 +56,7 @@ async function getQuotedPostInfo(supabase: any, quotedPostId: number | null) {
     .select(`
       comment,
       user_id,
+      is_private,
       author:profile!post_user_id_fkey (
         nickname
       )
@@ -67,6 +74,9 @@ export default async function PostDetail({ params }: Props) {
   // 現在のユーザーを取得
   const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
 
+  // 相互フォローのユーザーIDを取得（後で使用）
+  const mutualFollowIds = user ? await getMutualFollowIds(user.id, supabase) : [];
+
   // メイン投稿を取得
   const { data: post, error } = await supabase
     .from("post")
@@ -78,6 +88,7 @@ export default async function PostDetail({ params }: Props) {
       parent_post_id,
       quote_of,
       repost_of,
+      is_private,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -100,6 +111,42 @@ export default async function PostDetail({ params }: Props) {
     );
   }
 
+  // 限定ポストの権限チェック
+  if (post.is_private) {
+    if (!user) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.errorCard}>
+            <h2>この投稿は限定公開です</h2>
+            <p>この投稿を表示するにはログインが必要です。</p>
+            <Link href="/login" className={styles.backLink}>
+              <ArrowLeft size={20} />
+              ログインする
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // 相互フォローチェック
+    const hasAccess = post.user_id === user.id || mutualFollowIds.includes(post.user_id);
+
+    if (!hasAccess) {
+      return (
+        <div className={styles.container}>
+          <div className={styles.errorCard}>
+            <h2>この投稿を表示する権限がありません</h2>
+            <p>この投稿は限定公開されています。</p>
+            <Link href="/" className={styles.backLink}>
+              <ArrowLeft size={20} />
+              ホームに戻る
+            </Link>
+          </div>
+        </div>
+      );
+    }
+  }
+
   // 返信を取得（再帰的に取得）
   const { data: replies } = await supabase
     .from("post")
@@ -111,6 +158,7 @@ export default async function PostDetail({ params }: Props) {
       parent_post_id,
       quote_of,
       repost_of,
+      is_private,
       author:profile!post_user_id_fkey (
         nickname,
         avatar_url
@@ -125,10 +173,53 @@ export default async function PostDetail({ params }: Props) {
   const quotedPost = await getQuotedPostInfo(supabase, post.quote_of);
   const repostedPost = await getRepostedPostInfo(post.repost_of, supabase);
   
-  const normalizedRepostedPost = repostedPost ? {
-    ...repostedPost,
-    author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
-  } : null;
+  // 親投稿が限定投稿の場合、権限チェック
+  let validParentPost = parentPost;
+  if (parentPost?.is_private) {
+    if (!user) {
+      validParentPost = null;
+    } else {
+      const hasAccessToParent = parentPost.user_id === user.id || mutualFollowIds.includes(parentPost.user_id);
+      if (!hasAccessToParent) {
+        validParentPost = null;
+      }
+    }
+  }
+  
+  // 引用元が限定投稿の場合、権限チェック
+  let validQuotedPost = quotedPost;
+  if (quotedPost?.is_private) {
+    if (!user) {
+      validQuotedPost = null;
+    } else {
+      const hasAccessToQuote = quotedPost.user_id === user.id || mutualFollowIds.includes(quotedPost.user_id);
+      if (!hasAccessToQuote) {
+        validQuotedPost = null;
+      }
+    }
+  }
+  
+  // リポスト元が限定投稿の場合、権限チェック
+  let normalizedRepostedPost = null;
+  if (repostedPost) {
+    if (repostedPost.is_private) {
+      if (user) {
+        const hasAccessToRepost = repostedPost.user_id === user.id || mutualFollowIds.includes(repostedPost.user_id);
+        if (hasAccessToRepost) {
+          normalizedRepostedPost = {
+            ...repostedPost,
+            author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+          };
+        }
+      }
+      // ログインしていない場合はnull
+    } else {
+      normalizedRepostedPost = {
+        ...repostedPost,
+        author: Array.isArray(repostedPost.author) ? repostedPost.author[0] : repostedPost.author
+      };
+    }
+  }
 
   // 統計情報とユーザーアクションを取得
   const postStats = await getPostStats(post.id, supabase);
@@ -141,12 +232,41 @@ export default async function PostDetail({ params }: Props) {
       const replyQuotedPost = await getQuotedPostInfo(supabase, reply.quote_of);
       const replyRepostedPost = await getRepostedPostInfo(reply.repost_of, supabase);
       
-      const normalizedReplyRepostedPost = replyRepostedPost ? {
-        ...replyRepostedPost,
-        author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
-      } : null;
+      // 引用元が限定投稿の場合、権限チェック
+      let validQuotedPost = replyQuotedPost;
+      if (replyQuotedPost?.is_private) {
+        if (!user) {
+          validQuotedPost = null;
+        } else {
+          const hasAccessToQuote = replyQuotedPost.user_id === user.id || mutualFollowIds.includes(replyQuotedPost.user_id);
+          if (!hasAccessToQuote) {
+            validQuotedPost = null;
+          }
+        }
+      }
       
-      return { ...reply, ...stats, ...actions, quoted_post: replyQuotedPost, reposted_post: normalizedReplyRepostedPost };
+      // リポスト元が限定投稿の場合、権限チェック
+      let normalizedReplyRepostedPost = null;
+      if (replyRepostedPost) {
+        if (replyRepostedPost.is_private) {
+          if (user) {
+            const hasAccessToRepost = replyRepostedPost.user_id === user.id || mutualFollowIds.includes(replyRepostedPost.user_id);
+            if (hasAccessToRepost) {
+              normalizedReplyRepostedPost = {
+                ...replyRepostedPost,
+                author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
+              };
+            }
+          }
+        } else {
+          normalizedReplyRepostedPost = {
+            ...replyRepostedPost,
+            author: Array.isArray(replyRepostedPost.author) ? replyRepostedPost.author[0] : replyRepostedPost.author
+          };
+        }
+      }
+      
+      return { ...reply, ...stats, ...actions, quoted_post: validQuotedPost, reposted_post: normalizedReplyRepostedPost };
     })
   );
 
@@ -158,6 +278,27 @@ export default async function PostDetail({ params }: Props) {
         </Link>
         <h1 className={styles.title}>投稿</h1>
       </div>
+
+      {validParentPost && (
+        <div className={styles.parentPostSection}>
+          <div className={styles.threadLine}></div>
+          <PostCard
+            postId={validParentPost.id}
+            comment={validParentPost.comment}
+            nickname={validParentPost.author?.[0]?.nickname ?? "名無し"}
+            avatarUrl={validParentPost.author?.[0]?.avatar_url}
+            createdAt={validParentPost.created_at}
+            userId={validParentPost.user_id}
+            likeCount={0}
+            repostCount={0}
+            replyCount={0}
+            bookmarkCount={0}
+            isLiked={false}
+            isBookmarked={false}
+            isReposted={false}
+          />
+        </div>
+      )}
 
       <div className={styles.mainPost}>
         <PostCard
@@ -174,12 +315,12 @@ export default async function PostDetail({ params }: Props) {
           isLiked={postActions.isLiked}
           isBookmarked={postActions.isBookmarked}
           isReposted={postActions.isReposted}
-          replyToNickname={parentPost?.author?.nickname}
-          replyToUserId={parentPost?.user_id}
-          quotedPost={quotedPost ? {
-            comment: quotedPost.comment,
-            nickname: quotedPost.author?.nickname ?? "名無し",
-            userId: quotedPost.user_id,
+          replyToNickname={validParentPost?.author?.[0]?.nickname}
+          replyToUserId={validParentPost?.user_id}
+          quotedPost={validQuotedPost ? {
+            comment: validQuotedPost.comment,
+            nickname: validQuotedPost.author?.nickname ?? "名無し",
+            userId: validQuotedPost.user_id,
           } : undefined}
           repostedPost={normalizedRepostedPost ? {
             id: normalizedRepostedPost.id,

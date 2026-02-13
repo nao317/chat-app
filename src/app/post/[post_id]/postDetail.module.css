@@ -48,6 +48,21 @@
   margin-bottom: 32px;
 }
 
+.parentPostSection {
+  width: 100%;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.threadLine {
+  position: absolute;
+  left: 20px;
+  bottom: -8px;
+  width: 2px;
+  height: 8px;
+  background: var(--card-border);
+}
+
 .repliesSection {
   width: 100%;
 }
@@ -78,6 +93,12 @@
   font-size: 20px;
   color: var(--text-primary);
   margin-bottom: 20px;
+}
+
+.errorCard p {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
 }
 
 .backLink {
